@@ -1,0 +1,167 @@
+# 无人机访问控制系统主配置文件
+# Drone Access Control System Main Configuration
+
+# 系统基本信息
+system:
+  name: "无人机访问控制后端系统"
+  version: "1.0.0"
+  environment: "production"  # development, testing, production
+  log_level: "INFO"         # DEBUG, INFO, WARN, ERROR, CRITICAL
+  
+# 网络配置
+network:
+  # MAVLink：局域网发现监听地址，自动发现并连接所有向该地址发送心跳的无人机
+  mavlink:
+    connection_url: "udp://0.0.0.0:14550"  # 监听端口，多机自动发现
+    heartbeat_timeout_ms: 5000
+    connection_retry_count: 5
+    connection_retry_delay_ms: 2000
+    # 自定义MAVLink消息配置
+    custom_messages:
+      mission_purpose_upload:
+        message_id: 12921
+        enabled: true
+        auto_process: true
+      certificate_upload:
+        message_id: 200
+        enabled: true
+        chunk_size: 200
+        timeout_ms: 30000
+    
+  # ZeroMQ消息传递配置
+  zeromq:
+    publisher_port: 5555
+    subscriber_port: 5556
+    request_reply_port: 5557
+    
+  # REST API配置
+  api:
+    host: "0.0.0.0"
+    port: 8080
+    enable_cors: true
+    max_request_size_mb: 10
+
+# 数据库配置
+database:
+  type: "postgresql"  # postgresql, mysql, sqlite
+  host: "localhost"
+  port: 5432
+  database: "drone_control"
+  username: "${DB_USERNAME}"
+  password: "${DB_PASSWORD}"
+  connection_pool_size: 10
+  connection_timeout_ms: 5000
+  
+# 文件路径配置
+paths:
+  config_dir: "./config"
+  log_dir: "./logs"
+  data_dir: "./data"
+  temp_dir: "./temp"
+  certificates_dir: "./config/certificates"
+  policies_dir: "./config/policies"
+  
+# 安全配置
+security:
+  # 加密配置
+  encryption:
+    algorithm: "AES-256-GCM"
+    key_file: "${ENCRYPTION_KEY_FILE}"
+    
+  # 签名配置
+  signature:
+    private_key_file: "./config/certificates/private_key.pem"
+    public_key_file: "./config/certificates/public_key.pem"
+    default_validity_minutes: 30
+    max_validity_minutes: 120
+    signature_algorithm: "RSA-SHA256"
+    
+  # 访问控制配置
+  access_control:
+    default_policy: "DENY"
+    policy_evaluation_timeout_ms: 1000
+    max_concurrent_evaluations: 100
+    
+# 监控配置
+monitoring:
+  # 指标收集
+  metrics:
+    enabled: true
+    collection_interval_ms: 5000
+    retention_days: 30
+    
+  # 健康检查
+  health_check:
+    enabled: true
+    check_interval_ms: 10000
+    timeout_ms: 5000
+    
+  # 告警配置
+  alerts:
+    enabled: true
+    email_notifications: true
+    webhook_url: "${ALERT_WEBHOOK_URL}"
+
+# 性能配置
+performance:
+  # 线程池配置
+  thread_pool:
+    core_threads: 4
+    max_threads: 16
+    queue_size: 1000
+    
+  # 缓存配置
+  cache:
+    enabled: true
+    max_size_mb: 256
+    ttl_minutes: 60
+    
+  # 连接池配置
+  connection_pool:
+    initial_size: 5
+    max_size: 20
+    idle_timeout_ms: 300000
+
+# 功能开关
+features:
+  authentication_required: true
+  geofence_signature_enabled: true
+  flight_control_enabled: true
+  monitoring_enabled: true
+  api_enabled: true
+  
+  # HITL测试专用功能
+  hitl_testing:
+    enabled: true
+    auto_mission_confirmation: true
+    auto_certificate_upload: true
+    simulation_mode: true
+    debug_logging: true
+    
+  # 访问控制流程配置
+  access_control_flow:
+    auto_evaluate: true
+    cache_duration_minutes: 5
+    require_manual_confirmation: false
+    enable_geofence_unlock: true
+  
+# 环境变量映射
+environment_variables:
+  - name: "DB_USERNAME"
+    required: true
+    description: "数据库用户名"
+  - name: "DB_PASSWORD" 
+    required: true
+    description: "数据库密码"
+  - name: "ENCRYPTION_KEY_FILE"
+    required: true
+    description: "加密密钥文件路径"
+  - name: "ALERT_WEBHOOK_URL"
+    required: false
+    description: "告警通知Webhook URL"
+  - name: "WEATHER_API_KEY"
+    required: false
+    description: "天气API密钥"
+  - name: "REGISTRY_API_KEY"
+    required: false
+    description: "无人机注册API密钥"

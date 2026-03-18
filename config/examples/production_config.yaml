@@ -1,0 +1,189 @@
+# 生产环境配置示例
+# Production Environment Configuration Example
+
+# 系统基本信息
+system:
+  name: "无人机访问控制系统 - 生产环境"
+  version: "1.0.0"
+  environment: "production"
+  log_level: "INFO"
+  
+# 网络配置
+network:
+  mavlink:
+    connection_url: "udp://:14540"
+    heartbeat_timeout_ms: 3000
+    connection_retry_count: 3
+    connection_retry_delay_ms: 1000
+    
+  zeromq:
+    publisher_port: 5555
+    subscriber_port: 5556
+    request_reply_port: 5557
+    
+  api:
+    host: "0.0.0.0"
+    port: 8080
+    enable_cors: false              # 生产环境禁用CORS
+    max_request_size_mb: 10
+    enable_https: true              # 生产环境启用HTTPS
+    ssl_cert_file: "/etc/ssl/certs/drone-control.crt"
+    ssl_key_file: "/etc/ssl/private/drone-control.key"
+
+# 数据库配置 - 生产环境使用PostgreSQL集群
+database:
+  type: "postgresql"
+  host: "db-cluster.internal"
+  port: 5432
+  database: "drone_control_prod"
+  username: "${DB_USERNAME}"
+  password: "${DB_PASSWORD}"
+  connection_pool_size: 20          # 生产环境更大连接池
+  connection_timeout_ms: 5000
+  
+  # 生产环境数据库高可用配置
+  high_availability:
+    enabled: true
+    read_replicas:
+      - host: "db-replica-1.internal"
+        port: 5432
+      - host: "db-replica-2.internal"
+        port: 5432
+    failover_timeout_ms: 10000
+    
+# 文件路径配置
+paths:
+  config_dir: "/etc/drone-control"
+  log_dir: "/var/log/drone-control"
+  data_dir: "/var/lib/drone-control"
+  temp_dir: "/tmp/drone-control"
+  certificates_dir: "/etc/drone-control/certificates"
+  policies_dir: "/etc/drone-control/policies"
+  
+# 安全配置 - 生产环境严格安全设置
+security:
+  encryption:
+    algorithm: "AES-256-GCM"
+    key_file: "${ENCRYPTION_KEY_FILE}"
+    key_rotation_days: 90           # 定期轮换密钥
+    
+  signature:
+    private_key_file: "/etc/drone-control/certificates/private_key.pem"
+    public_key_file: "/etc/drone-control/certificates/public_key.pem"
+    default_validity_minutes: 30
+    max_validity_minutes: 120
+    signature_algorithm: "RSA-SHA256"
+    
+  access_control:
+    default_policy: "DENY"          # 生产环境默认拒绝
+    policy_evaluation_timeout_ms: 1000
+    max_concurrent_evaluations: 200
+    
+  # 生产环境额外安全措施
+  hardening:
+    enable_rate_limiting: true
+    max_requests_per_minute: 1000
+    enable_ip_whitelist: true
+    allowed_ip_ranges:
+      - "10.0.0.0/8"
+      - "192.168.0.0/16"
+    enable_request_signing: true
+    
+# 监控配置 - 生产环境完整监控
+monitoring:
+  metrics:
+    enabled: true
+    collection_interval_ms: 5000
+    retention_days: 90              # 生产环境长期保留
+    export_to_prometheus: true
+    prometheus_port: 9090
+    
+  health_check:
+    enabled: true
+    check_interval_ms: 10000
+    timeout_ms: 5000
+    
+  alerts:
+    enabled: true
+    email_notifications: true
+    webhook_url: "${ALERT_WEBHOOK_URL}"
+    
+    # 生产环境告警规则
+    rules:
+      - name: "high_error_rate"
+        condition: "error_rate > 0.05"
+        severity: "critical"
+        
+      - name: "high_response_time"
+        condition: "avg_response_time > 2000"
+        severity: "warning"
+        
+      - name: "low_disk_space"
+        condition: "disk_usage > 0.85"
+        severity: "warning"
+        
+# 性能配置 - 生产环境优化配置
+performance:
+  thread_pool:
+    core_threads: 8
+    max_threads: 32
+    queue_size: 2000
+    
+  cache:
+    enabled: true
+    max_size_mb: 512
+    ttl_minutes: 60
+    
+  connection_pool:
+    initial_size: 10
+    max_size: 50
+    idle_timeout_ms: 300000
+    
+  # 生产环境性能优化
+  optimization:
+    enable_connection_pooling: true
+    enable_query_caching: true
+    enable_response_compression: true
+    max_concurrent_requests: 1000
+
+# 功能开关 - 生产环境全功能启用
+features:
+  authentication_required: true
+  geofence_signature_enabled: true
+  flight_control_enabled: true
+  monitoring_enabled: true
+  api_enabled: true
+  audit_logging: true               # 生产环境启用审计
+  
+# 生产环境特有配置
+production:
+  # 高可用配置
+  high_availability:
+    enabled: true
+    cluster_nodes:
+      - "node-1.internal:8080"
+      - "node-2.internal:8080"
+      - "node-3.internal:8080"
+    load_balancer: "haproxy"
+    
+  # 备份配置
+  backup:
+    enabled: true
+    schedule: "0 2 * * *"           # 每天凌晨2点备份
+    retention_days: 30
+    backup_location: "/backup/drone-control"
+    
+  # 审计配置
+  audit:
+    enabled: true
+    log_all_requests: true
+    log_policy_decisions: true
+    log_authentication_events: true
+    retention_days: 365
+    
+  # 合规配置
+  compliance:
+    enable_gdpr_compliance: true
+    enable_data_encryption: true
+    enable_access_logging: true
+    data_retention_days: 2555       # 7年数据保留

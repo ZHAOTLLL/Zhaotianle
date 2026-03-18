@@ -1,0 +1,20 @@
+CompileFlags:
+  Add:
+    - -I/home/zhao/px4/access_control_dev/include
+    - -I/home/zhao/px4/access_control_dev/third_party/miracl-core/cpp
+    - -isystem
+    - /usr/local/include/mavsdk
+    - -std=gnu++17
+    - -DHAVE_MAVSDK
+    - -DHAVE_NLOHMANN_JSON
+    - -DHAVE_OPENSSL
+    - -DHAVE_ZMQ
+  CompilationDatabase: build/compile_commands.json
+
+Diagnostics:
+  UnusedIncludes: None
+  MissingIncludes: None
+
+Index:
+  Background: Build
+

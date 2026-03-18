@@ -1,0 +1,124 @@
+# 开发环境配置示例
+# Development Environment Configuration Example
+
+# 系统基本信息
+system:
+  name: "无人机访问控制系统 - 开发环境"
+  version: "1.0.0-dev"
+  environment: "development"
+  log_level: "DEBUG"
+  
+# 网络配置 - 开发环境使用不同端口避免冲突
+network:
+  mavlink:
+    connection_url: "udp://:14541"  # 开发环境端口
+    heartbeat_timeout_ms: 5000      # 更长的超时用于调试
+    connection_retry_count: 5
+    connection_retry_delay_ms: 2000
+    
+  zeromq:
+    publisher_port: 5565
+    subscriber_port: 5566
+    request_reply_port: 5567
+    
+  api:
+    host: "127.0.0.1"              # 仅本地访问
+    port: 8081                     # 开发环境端口
+    enable_cors: true
+    max_request_size_mb: 50        # 开发环境允许更大请求
+
+# 数据库配置 - 使用SQLite简化开发
+database:
+  type: "sqlite"
+  database: "./data/dev_drone_control.db"
+  connection_timeout_ms: 10000
+  
+# 文件路径配置
+paths:
+  config_dir: "./config"
+  log_dir: "./logs/dev"
+  data_dir: "./data/dev"
+  temp_dir: "./temp/dev"
+  certificates_dir: "./config/certificates/dev"
+  policies_dir: "./config/policies"
+  
+# 安全配置 - 开发环境使用测试密钥
+security:
+  encryption:
+    algorithm: "AES-256-GCM"
+    key_file: "./config/certificates/dev/dev_encryption.key"
+    
+  signature:
+    private_key_file: "./config/certificates/dev/dev_private_key.pem"
+    public_key_file: "./config/certificates/dev/dev_public_key.pem"
+    default_validity_minutes: 60    # 开发环境更长有效期
+    max_validity_minutes: 240
+    signature_algorithm: "RSA-SHA256"
+    
+  access_control:
+    default_policy: "PERMIT"        # 开发环境默认允许
+    policy_evaluation_timeout_ms: 5000
+    max_concurrent_evaluations: 50
+    
+# 监控配置 - 开发环境更频繁的监控
+monitoring:
+  metrics:
+    enabled: true
+    collection_interval_ms: 1000    # 更频繁收集
+    retention_days: 7               # 较短保留期
+    
+  health_check:
+    enabled: true
+    check_interval_ms: 5000
+    timeout_ms: 2000
+    
+  alerts:
+    enabled: false                  # 开发环境禁用告警
+    
+# 性能配置 - 开发环境较小的资源配置
+performance:
+  thread_pool:
+    core_threads: 2
+    max_threads: 8
+    queue_size: 100
+    
+  cache:
+    enabled: true
+    max_size_mb: 64
+    ttl_minutes: 30
+    
+  connection_pool:
+    initial_size: 2
+    max_size: 10
+    idle_timeout_ms: 60000
+
+# 功能开关 - 开发环境可以禁用某些功能进行测试
+features:
+  authentication_required: false    # 开发时可以禁用认证
+  geofence_signature_enabled: true
+  flight_control_enabled: true
+  monitoring_enabled: true
+  api_enabled: true
+  debug_mode: true                  # 开发环境特有
+  mock_weather_service: true        # 使用模拟天气服务
+  
+# 开发环境特有配置
+development:
+  # 模拟数据配置
+  mock_data:
+    enabled: true
+    mock_drones_count: 5
+    mock_weather_updates: true
+    
+  # 调试配置
+  debug:
+    enable_request_logging: true
+    enable_response_logging: true
+    log_sql_queries: true
+    enable_performance_profiling: true
+    
+  # 测试配置
+  testing:
+    auto_create_test_data: true
+    reset_database_on_startup: false
+    enable_test_endpoints: true

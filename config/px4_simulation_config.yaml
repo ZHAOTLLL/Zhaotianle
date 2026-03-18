@@ -1,0 +1,152 @@
+# PX4仿真集成配置文件
+# PX4 Simulation Integration Configuration
+
+# PX4仿真设置
+px4_simulation:
+  # PX4源码路径
+  source_path: "${PX4_SOURCE_PATH:-/home/zhao/px4/PX4-Autopilot}"
+  
+  # 仿真类型
+  simulation_type: "jMAVSim"  # jMAVSim, Gazebo, AirSim
+  
+  # 仿真参数
+  simulation:
+    # 无人机数量
+    drone_count: 1
+    
+    # 仿真速度
+    simulation_speed: 1.0
+    
+    # 世界设置
+    world: "default"
+    
+    # 天气条件
+    weather: "clear"  # clear, cloudy, rainy, windy
+    
+    # 时间设置
+    start_time: "08:00"
+    duration_hours: 2
+
+# MAVLink连接设置
+mavlink_connections:
+  # 主连接
+  primary:
+    type: "udp"
+    host: "127.0.0.1"
+    port: 14550
+    protocol: "v2.0"
+    
+  # 备用连接
+  secondary:
+    type: "udp"
+    host: "127.0.0.1"
+    port: 14552
+    protocol: "v2.0"
+
+# 测试场景配置
+test_scenarios:
+  # 基础连接测试
+  basic_connection:
+    name: "基础连接测试"
+    description: "测试与PX4的基本MAVLink连接"
+    duration_minutes: 5
+    expected_events:
+      - "connection_established"
+      - "heartbeat_received"
+      - "telemetry_data_received"
+    
+  # 访问控制测试
+  access_control_test:
+    name: "访问控制测试"
+    description: "测试访问控制策略在仿真环境中的执行"
+    duration_minutes: 10
+    test_cases:
+      - name: "政府无人机访问"
+        drone_attributes:
+          organization: "government"
+          role: "security"
+          trust_level: "high"
+        expected_result: "PERMIT"
+        
+      - name: "个人无人机限制"
+        drone_attributes:
+          organization: "individual"
+          role: "hobbyist"
+          trust_level: "low"
+        expected_result: "DENY"
+        
+      - name: "PX4仿真测试"
+        drone_attributes:
+          organization: "test"
+          role: "developer"
+          trust_level: "medium"
+        expected_result: "PERMIT"
+    
+  # 自动飞行任务测试
+  auto_flight_test:
+    name: "自动飞行任务测试"
+    description: "测试自动飞行任务的请求和执行"
+    duration_minutes: 15
+    flight_plans:
+      - name: "简单航点任务"
+        waypoints:
+          - latitude: 47.397742
+            longitude: 8.545594
+            altitude: 10.0
+          - latitude: 47.397742
+            longitude: 8.545594
+            altitude: 20.0
+          - latitude: 47.397742
+            longitude: 8.545594
+            altitude: 10.0
+        mission_type: "test"
+        
+      - name: "巡检任务"
+        waypoints:
+          - latitude: 47.397742
+            longitude: 8.545594
+            altitude: 15.0
+          - latitude: 47.398742
+            longitude: 8.546594
+            altitude: 15.0
+          - latitude: 47.399742
+            longitude: 8.547594
+            altitude: 15.0
+        mission_type: "inspection"
+
+# 监控和日志设置
+monitoring:
+  # 日志级别
+  log_level: "INFO"
+  
+  # 数据记录
+  data_logging:
+    enabled: true
+    directory: "./test_results/logs"
+    format: "json"
+    
+  # 性能监控
+  performance_monitoring:
+    enabled: true
+    metrics_interval_ms: 1000
+    
+  # 告警设置
+  alerts:
+    connection_timeout_seconds: 30
+    battery_low_threshold: 20.0
+    altitude_violation_threshold: 120.0
+
+# 测试报告设置
+reporting:
+  # 报告格式
+  format: "html"  # html, json, xml
+  
+  # 输出目录
+  output_directory: "./test_results/reports"
+  
+  # 包含内容
+  include:
+    - "test_results"
+    - "performance_metrics"
+    - "error_logs"
+    - "screenshots"

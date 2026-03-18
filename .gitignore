@@ -1,0 +1,52 @@
+# Build
+build/
+
+# Tools (not for repo)
+tools/
+
+# Web (not for repo)
+web/
+
+# Docs (not for repo)，保留功能演示图供 README 引用
+docs/*
+!docs/images/
+!docs/images/*
+
+# Experiments (not for repo)
+src/experiments/
+
+# JSON (tokens, keys, signed data - not for repo)
+*.json
+cmake-build-*/
+*.o
+*.a
+*.so
+*.exe
+*.sh
+*.py
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Config / secrets (optional: remove if you want to track sample configs)
+config/keys/*.pem
+*.pem
+!config/test_certificates/
+
+# Logs and temp
+*.log
+*.tmp
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Miracl / third_party build artifacts
+third_party/miracl-core/cpp/*.o
+third_party/miracl-core/cpp/core.a

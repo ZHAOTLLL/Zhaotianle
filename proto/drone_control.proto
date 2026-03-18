@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package drone_control;
+
+option go_package = "github.com/access_control_core/api-go/pkg/grpcpc";
+
+// 地面端核心服务：仅保留与访问控制、无人机、飞行相关的 RPC；健康/资源/策略/展示由 Go 网关实现。
+service DroneControlCore {
+  rpc GetDrones(GetDronesRequest) returns (JsonResponse);
+  rpc GetDroneStates(GetDroneStatesRequest) returns (JsonResponse);
+  rpc GetDroneDetail(GetDroneDetailRequest) returns (JsonResponse);
+  rpc FlightCommand(FlightCommandRequest) returns (JsonResponse);
+  rpc FlightCommandWithParams(FlightCommandWithParamsRequest) returns (JsonResponse);
+  rpc AutoFlightRequest(AutoFlightRequestReq) returns (JsonResponse);
+  rpc GetFlightStatus(GetFlightStatusRequest) returns (JsonResponse);
+  rpc EvaluateAccess(EvaluateAccessRequest) returns (JsonResponse);
+  rpc ConfirmMission(ConfirmMissionRequest) returns (JsonResponse);
+}
+
+message JsonResponse {
+  string json = 1;
+  string error = 2;
+}
+
+message GetDronesRequest {}
+message GetDroneStatesRequest {}
+message GetDroneDetailRequest { int32 drone_id = 1; }
+
+message FlightCommandRequest {
+  int32 drone_id = 1;
+  string command = 2;
+}
+
+message FlightCommandWithParamsRequest {
+  int32 drone_id = 1;
+  string command = 2;
+  string params_json = 3;
+}
+
+message AutoFlightRequestReq {}
+message GetFlightStatusRequest {}
+
+message EvaluateAccessRequest { string request_json = 1; }
+message ConfirmMissionRequest { int32 drone_id = 1; }

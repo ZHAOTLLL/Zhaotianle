@@ -1,0 +1,222 @@
+# HITL硬件在环测试专用配置文件
+# Hardware-in-the-Loop Testing Configuration
+
+# 测试环境配置
+test_environment:
+  name: "PX4 HITL测试环境"
+  mode: "hardware_in_loop"
+  simulation: true
+  
+# PX4连接配置
+px4_connection:
+  # 主要连接方式 - UDP (适用于SITL)
+  primary:
+    type: "udp"
+    host: "127.0.0.1"
+    port: 14550
+    auto_connect: true
+    
+  # 备用连接方式 - 串口 (适用于真实硬件)
+  backup:
+    type: "serial"
+    device: "/dev/ttyACM0"
+    baud_rate: 57600
+    enabled: false
+    
+  # 连接参数
+  connection_params:
+    timeout_ms: 10000
+    retry_count: 5
+    retry_delay_ms: 2000
+    heartbeat_timeout_ms: 5000
+
+# 测试场景配置
+test_scenarios:
+  # 基础连接测试
+  basic_connection:
+    name: "基础连接测试"
+    description: "测试地面站与PX4的基本连接"
+    enabled: true
+    steps:
+      - "建立MAVLink连接"
+      - "接收心跳消息"
+      - "验证连接状态"
+      
+  # 任务目的上传测试
+  mission_purpose_test:
+    name: "任务目的上传测试"
+    description: "测试无人机主动上传任务目的"
+    enabled: true
+    expected_mission:
+      name: "蕙园8号楼巡检任务"
+      target_location: "蕙园8号楼"
+      operation_type: "inspection"
+      certificate_hash: "government_drone_001"
+    steps:
+      - "等待任务目的消息"
+      - "解析任务信息"
+      - "验证任务数据完整性"
+      
+  # 证书上传测试
+  certificate_upload_test:
+    name: "证书上传测试"
+    description: "测试证书分块上传功能"
+    enabled: true
+    certificate_file: "./config/certificates/test_drone_cert.pem"
+    expected_chunks: 20
+    steps:
+      - "发送任务确认命令"
+      - "请求证书上传"
+      - "接收证书数据块"
+      - "验证证书完整性"
+      
+  # 访问控制评估测试
+  access_control_test:
+    name: "访问控制评估测试"
+    description: "测试三级访问控制评估"
+    enabled: true
+    test_cases:
+      - scenario: "政府无人机访问蕙园8号楼"
+        expected_result: "授权通过"
+        drone_type: "government"
+        target_location: "蕙园8号楼"
+        operation: "inspection"
+      - scenario: "商业无人机访问学校区域"
+        expected_result: "访问拒绝"
+        drone_type: "commercial"
+        target_location: "学校区域"
+        operation: "delivery"
+    steps:
+      - "接收任务目的"
+      - "执行身份认证"
+      - "执行区域访问检查"
+      - "执行行为控制评估"
+      - "返回访问控制决策"
+
+# 测试数据配置
+test_data:
+  # 测试证书
+  certificates:
+    government_drone:
+      path: "./config/certificates/test_government_cert.pem"
+      type: "x509"
+      organization: "政府机构"
+      trust_level: "high"
+    commercial_drone:
+      path: "./config/certificates/test_commercial_cert.pem"
+      type: "x509"
+      organization: "商业公司"
+      trust_level: "medium"
+      
+  # 测试任务
+  missions:
+    inspection_mission:
+      name: "蕙园8号楼巡检任务"
+      target_location: "蕙园8号楼"
+      operation_type: "inspection"
+      priority: "high"
+      estimated_duration: 30
+    delivery_mission:
+      name: "桂园餐厅送餐任务"
+      target_location: "桂园餐厅"
+      operation_type: "delivery"
+      priority: "medium"
+      estimated_duration: 15
+
+# 自动化测试配置
+automation:
+  # 自动测试流程
+  auto_test_flow:
+    enabled: true
+    start_delay_seconds: 10
+    test_interval_seconds: 30
+    max_test_duration_minutes: 60
+    
+  # 自动命令发送
+  auto_commands:
+    mission_confirmation:
+      enabled: true
+      delay_after_mission_purpose_seconds: 5
+      command_id: 31010
+    certificate_upload_request:
+      enabled: true
+      delay_after_confirmation_seconds: 3
+      command_id: 31011
+    access_control_result:
+      enabled: true
+      delay_after_certificate_seconds: 10
+      command_id: 31012
+      default_result: 1  # 1=授权通过, 0=访问拒绝
+
+# 监控和日志配置
+monitoring:
+  # 测试日志
+  test_logging:
+    enabled: true
+    log_level: "DEBUG"
+    log_file: "./logs/hitl_test.log"
+    max_file_size_mb: 100
+    max_files: 10
+    
+  # 性能监控
+  performance_monitoring:
+    enabled: true
+    metrics:
+      - "connection_latency"
+      - "message_processing_time"
+      - "access_control_evaluation_time"
+      - "certificate_upload_speed"
+      
+  # 告警配置
+  alerts:
+    connection_lost:
+      enabled: true
+      timeout_seconds: 30
+    test_failure:
+      enabled: true
+      max_failures: 3
+    performance_degradation:
+      enabled: true
+      latency_threshold_ms: 1000
+
+# 测试报告配置
+reporting:
+  # 测试报告生成
+  test_reports:
+    enabled: true
+    format: "json"
+    output_dir: "./test_reports"
+    include_screenshots: false
+    include_logs: true
+    
+  # 实时状态显示
+  real_time_status:
+    enabled: true
+    update_interval_seconds: 1
+    display_metrics:
+      - "connection_status"
+      - "current_test"
+      - "test_progress"
+      - "error_count"
+
+# 调试配置
+debug:
+  # 调试选项
+  options:
+    verbose_logging: true
+    print_mavlink_messages: true
+    print_access_control_decisions: true
+    print_certificate_data: false  # 证书数据较大，默认不打印
+    
+  # 调试工具
+  tools:
+    message_inspector: true
+    connection_monitor: true
+    performance_profiler: true
+    
+  # 测试数据导出
+  data_export:
+    enabled: true
+    export_mavlink_messages: true
+    export_access_control_logs: true
+    export_performance_metrics: true

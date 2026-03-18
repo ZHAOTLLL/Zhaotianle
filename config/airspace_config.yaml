@@ -1,0 +1,3384 @@
+airspace:
+  attributes:
+    data_source: OpenStreetMap
+    emergency_contact: +86-551-emergency
+    last_updated: '2024-09-21'
+    timezone: Asia/Shanghai
+    weather_station: ZSOF
+  authority: 合肥市空域管理机构
+  boundary:
+  - alt_max: 120
+    alt_min: 0
+    lat: 31.75229
+    lon: 117.16185
+  - alt_max: 120
+    alt_min: 0
+    lat: 31.78575
+    lon: 117.16185
+  - alt_max: 120
+    alt_min: 0
+    lat: 31.78575
+    lon: 117.22901
+  - alt_max: 120
+    alt_min: 0
+    lat: 31.75229
+    lon: 117.22901
+  code: HEFEI_AIRSPACE_001
+  contact_info:
+    email: admin@hefei-airspace.gov
+    phone: +86-551-xxxx-xxxx
+  description: 基于OSM数据的合肥空域配置，包含239个建筑物资源
+  name: 合肥空域
+airspace_rules:
+  area_restrictions:
+    commercial_area:
+      allowed_operations:
+      - delivery
+      - inspection
+      - monitoring
+      business_hours_only: true
+      max_altitude: 80
+    residential_area:
+      allowed_operations:
+      - emergency
+      - monitoring
+      max_altitude: 30
+      noise_restrictions: true
+      privacy_protection: true
+    school_area:
+      allowed_operations:
+      - emergency
+      - monitoring
+      max_altitude: 20
+      no_fly_zone: true
+      school_hours_restricted: true
+    university_area:
+      allowed_operations:
+      - educational
+      - research
+      - monitoring
+      max_altitude: 60
+      restricted_times:
+      - 22:00-06:00
+  general:
+    buffer_distance: 30
+    max_altitude: 120
+    max_speed: 10
+    min_altitude: 5
+  noise_restrictions:
+    max_noise_level: 65
+    quiet_hours: 22:00-07:00
+    residential_buffer: 100
+    school_buffer: 200
+  time_restrictions:
+    holiday_restrictions: true
+    night_flight_prohibited: true
+    night_hours: 22:00-06:00
+    school_hours: 07:00-18:00
+    school_hours_restricted: true
+    weekend_restrictions: true
+  weather_restrictions:
+    max_wind_speed: 15
+    min_visibility: 5000
+    no_fly_conditions:
+    - thunderstorm
+    - heavy_rain
+    - fog
+    - smog
+building_statistics:
+  by_type:
+    university: 34
+    school: 25
+    apartments: 51
+    dormitory: 23
+    commercial: 14
+    office: 0
+    hospital: 0
+    residential: 1
+    railway: 1
+    train_station: 3
+    grandstand: 1
+    house: 1
+    true: 80
+  coverage_area:
+    max_lat: 31.78575
+    max_lon: 117.22901
+    min_lat: 31.75229
+    min_lon: 117.16185
+    total_area_km2: 1.2
+  total_buildings: 239
+emergency_procedures:
+  emergency_contacts:
+  - phone: +86-551-control
+    radio: 121.5MHz
+    role: 合肥空域管制
+  - phone: '120'
+    radio: emergency_freq
+    role: 紧急救援
+  - phone: '119'
+    radio: fire_freq
+    role: 消防部门
+  emergency_landing_sites:
+  - capacity: 10
+    code: EMRG_LAND_HEFEI_1
+    position:
+      alt: 0
+      lat: 31.784
+      lon: 117.2
+    type: open_area
+  - capacity: 8
+    code: EMRG_LAND_HEFEI_2
+    position:
+      alt: 0
+      lat: 31.786
+      lon: 117.22
+    type: parking_lot
+  procedures:
+    lost_communication:
+    - 返回最后已知安全位置
+    - 降低高度至30米
+    - 激活应急信标
+    - 寻找紧急着陆点
+    - 避免学校区域
+    system_failure:
+    - 立即通知地面控制
+    - 执行自动返航程序
+    - 避开住宅和学校区域
+    - 准备紧急着陆
+    weather_emergency:
+    - 立即寻找最近避风点
+    - 降低飞行高度
+    - 减速飞行
+    - 等待天气改善
+    - 优先考虑开放区域
+flight_paths:
+- attributes:
+    duration_minutes: 20
+    loop: true
+    required_sensors:
+    - camera
+    - thermal
+    restricted_areas:
+    - school
+    - residential
+  code: PATROL_UNIVERSITY
+  name: 大学区域巡逻
+  type: patrol
+  waypoints:
+  - alt: 50
+    lat: 31.784
+    lon: 117.21
+    speed: 3.0
+  - alt: 50
+    lat: 31.786
+    lon: 117.21
+    speed: 3.0
+  - alt: 50
+    lat: 31.786
+    lon: 117.214
+    speed: 3.0
+  - alt: 50
+    lat: 31.784
+    lon: 117.214
+    speed: 3.0
+- attributes:
+    business_hours_only: true
+    delivery_zones:
+    - commercial_buildings
+    priority: medium
+  code: DELIVERY_COMMERCIAL
+  name: 商业区域配送
+  type: delivery
+  waypoints:
+  - alt: 30
+    lat: 31.784
+    lon: 117.205
+    speed: 4.0
+  - alt: 30
+    lat: 31.785
+    lon: 117.205
+    speed: 4.0
+  - alt: 30
+    lat: 31.785
+    lon: 117.21
+    speed: 4.0
+  - alt: 30
+    lat: 31.784
+    lon: 117.21
+    speed: 4.0
+- attributes:
+    emergency_only: true
+    no_restrictions: true
+    priority: high
+    response_time_minutes: 5
+  code: EMERGENCY_RESPONSE
+  name: 紧急响应路径
+  type: emergency
+  waypoints:
+  - alt: 80
+    lat: 31.784
+    lon: 117.2
+    speed: 8.0
+  - alt: 80
+    lat: 31.786
+    lon: 117.2
+    speed: 8.0
+  - alt: 80
+    lat: 31.786
+    lon: 117.22
+    speed: 8.0
+  - alt: 80
+    lat: 31.784
+    lon: 117.22
+    speed: 8.0
+locations:
+  - name: 通用建筑_3
+    code: BLDG_GEN_3
+    type: building
+    lat: 31.7856
+    lon: 117.21
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_3
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_5
+    code: BLDG_GEN_5
+    type: building
+    lat: 31.7855
+    lon: 117.21
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_5
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_8
+    code: BLDG_GEN_8
+    type: building
+    lat: 31.7854
+    lon: 117.211
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_8
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_9
+    code: BLDG_GEN_9
+    type: building
+    lat: 31.7856
+    lon: 117.212
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_9
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_10
+    code: BLDG_GEN_10
+    type: building
+    lat: 31.7851
+    lon: 117.212
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_10
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_11
+    code: BLDG_GEN_11
+    type: building
+    lat: 31.7858
+    lon: 117.215
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_11
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_12
+    code: BLDG_GEN_12
+    type: building
+    lat: 31.7846
+    lon: 117.215
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_12
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_13
+    code: BLDG_GEN_13
+    type: building
+    lat: 31.7844
+    lon: 117.215
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_13
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_14
+    code: BLDG_GEN_14
+    type: building
+    lat: 31.7843
+    lon: 117.216
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_14
+    restricted_times: ['22:00-06:00']
+  - name: 合肥工业大学图书馆
+    code: BLDG_GEN_15
+    type: building
+    lat: 31.7702
+    lon: 117.196
+    alt: 10.0
+    building_type: university
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['university', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_15
+    restricted_times: ['22:00-06:00']
+  - name: 翡翠科教楼
+    code: BLDG_GEN_16
+    type: building
+    lat: 31.7734
+    lon: 117.2
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_16
+    restricted_times: ['22:00-06:00']
+  - name: 十二教
+    code: BLDG_UNIV_17
+    type: building
+    lat: 31.7723
+    lon: 117.199
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_17
+    restricted_times: ['22:00-06:00']
+  - name: 十一教
+    code: BLDG_UNIV_18
+    type: building
+    lat: 31.7723
+    lon: 117.2
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_18
+    restricted_times: ['22:00-06:00']
+  - name: 十教
+    code: BLDG_UNIV_19
+    type: building
+    lat: 31.7721
+    lon: 117.199
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_19
+    restricted_times: ['22:00-06:00']
+  - name: 九教
+    code: BLDG_UNIV_20
+    type: building
+    lat: 31.7721
+    lon: 117.2
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_20
+    restricted_times: ['22:00-06:00']
+  - name: 建艺馆
+    code: BLDG_SCH_21
+    type: building
+    lat: 31.7722
+    lon: 117.196
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_SCH_21
+    restricted_times: ['22:00-06:00']
+  - name: 八教
+    code: BLDG_SCH_22
+    type: building
+    lat: 31.7717
+    lon: 117.199
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_SCH_22
+    restricted_times: ['22:00-06:00']
+  - name: 七教
+    code: BLDG_SCH_23
+    type: building
+    lat: 31.7717
+    lon: 117.2
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_SCH_23
+    restricted_times: ['22:00-06:00']
+  - name: 六教
+    code: BLDG_SCH_24
+    type: building
+    lat: 31.7712
+    lon: 117.199
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_SCH_24
+    restricted_times: ['22:00-06:00']
+  - name: 五教
+    code: BLDG_SCH_25
+    type: building
+    lat: 31.7711
+    lon: 117.2
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_SCH_25
+    restricted_times: ['22:00-06:00']
+  - name: 四教
+    code: BLDG_SCH_26
+    type: building
+    lat: 31.7708
+    lon: 117.199
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_SCH_26
+    restricted_times: ['22:00-06:00']
+  - name: 三教
+    code: BLDG_SCH_27
+    type: building
+    lat: 31.7707
+    lon: 117.2
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_SCH_27
+    restricted_times: ['22:00-06:00']
+  - name: 二教
+    code: BLDG_SCH_28
+    type: building
+    lat: 31.7704
+    lon: 117.199
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_SCH_28
+    restricted_times: ['22:00-06:00']
+  - name: 一教
+    code: BLDG_SCH_29
+    type: building
+    lat: 31.7704
+    lon: 117.2
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_SCH_29
+    restricted_times: ['22:00-06:00']
+  - name: 合工大新区南门
+    code: BLDG_GEN_30
+    type: building
+    lat: 31.7678
+    lon: 117.199
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_30
+    restricted_times: ['22:00-06:00']
+  - name: 综合楼
+    code: BLDG_GEN_31
+    type: building
+    lat: 31.7758
+    lon: 117.199
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_31
+    restricted_times: ['22:00-06:00']
+  - name: 体测中心
+    code: BLDG_GEN_32
+    type: building
+    lat: 31.7747
+    lon: 117.203
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_32
+    restricted_times: ['22:00-06:00']
+  - name: 合工大新区北门
+    code: BLDG_GEN_33
+    type: building
+    lat: 31.7767
+    lon: 117.2
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_33
+    restricted_times: ['22:00-06:00']
+  - name: 教育超市
+    code: BLDG_GEN_34
+    type: building
+    lat: 31.7756
+    lon: 117.199
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_34
+    restricted_times: ['22:00-06:00']
+  - name: 食堂
+    code: BLDG_GEN_36
+    type: building
+    lat: 31.7743
+    lon: 117.194
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_36
+    restricted_times: ['22:00-06:00']
+  - name: 澡堂
+    code: BLDG_GEN_37
+    type: building
+    lat: 31.7747
+    lon: 117.194
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_37
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_38
+    code: BLDG_GEN_38
+    type: building
+    lat: 31.7738
+    lon: 117.198
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_38
+    restricted_times: ['22:00-06:00']
+  - name: 1号实验楼
+    code: BLDG_SCH_39
+    type: building
+    lat: 31.7721
+    lon: 117.202
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_SCH_39
+    restricted_times: ['22:00-06:00']
+  - name: 1号实验楼
+    code: BLDG_SCH_40
+    type: building
+    lat: 31.772
+    lon: 117.202
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_SCH_40
+    restricted_times: ['22:00-06:00']
+  - name: 1号实验楼
+    code: BLDG_SCH_41
+    type: building
+    lat: 31.7719
+    lon: 117.202
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_SCH_41
+    restricted_times: ['22:00-06:00']
+  - name: 2号实验楼
+    code: BLDG_SCH_44
+    type: building
+    lat: 31.7726
+    lon: 117.202
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_SCH_44
+    restricted_times: ['22:00-06:00']
+  - name: 2号实验楼
+    code: BLDG_SCH_45
+    type: building
+    lat: 31.7725
+    lon: 117.202
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_SCH_45
+    restricted_times: ['22:00-06:00']
+  - name: 2号实验楼
+    code: BLDG_SCH_46
+    type: building
+    lat: 31.7724
+    lon: 117.202
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_SCH_46
+    restricted_times: ['22:00-06:00']
+  - name: 5号实验楼
+    code: BLDG_SCH_49
+    type: building
+    lat: 31.7736
+    lon: 117.203
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_SCH_49
+    restricted_times: ['22:00-06:00']
+  - name: 工培中心
+    code: BLDG_SCH_50
+    type: building
+    lat: 31.7725
+    lon: 117.203
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_SCH_50
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_51
+    code: BLDG_GEN_51
+    type: building
+    lat: 31.773
+    lon: 117.2
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_51
+    restricted_times: ['22:00-06:00']
+  - name: 双子楼西楼
+    code: BLDG_GEN_52
+    type: building
+    lat: 31.7735
+    lon: 117.199
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_52
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_53
+    code: BLDG_GEN_53
+    type: building
+    lat: 31.7735
+    lon: 117.2
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_53
+    restricted_times: ['22:00-06:00']
+  - name: 商业建筑_54
+    code: BLDG_COMM_54
+    type: building
+    lat: 31.7779
+    lon: 117.198
+    alt: 25.0
+    building_type: commercial
+    sensitivity_level: medium
+    max_altitude: 45
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['commercial', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_COMM_54
+    restricted_times: ['22:00-06:00']
+  - name: 商业建筑_55
+    code: BLDG_COMM_55
+    type: building
+    lat: 31.7776
+    lon: 117.202
+    alt: 25.0
+    building_type: commercial
+    sensitivity_level: medium
+    max_altitude: 45
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['commercial', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_COMM_55
+    restricted_times: ['22:00-06:00']
+  - name: 天时广场
+    code: BLDG_COMM_56
+    type: building
+    lat: 31.7781
+    lon: 117.203
+    alt: 25.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 45
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_COMM_56
+    restricted_times: ['22:00-06:00']
+  - name: 商业建筑_57
+    code: BLDG_COMM_57
+    type: building
+    lat: 31.7783
+    lon: 117.202
+    alt: 25.0
+    building_type: commercial
+    sensitivity_level: medium
+    max_altitude: 45
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['commercial', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_COMM_57
+    restricted_times: ['22:00-06:00']
+  - name: 商业建筑_58
+    code: BLDG_COMM_58
+    type: building
+    lat: 31.7778
+    lon: 117.201
+    alt: 25.0
+    building_type: commercial
+    sensitivity_level: medium
+    max_altitude: 45
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['commercial', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_COMM_58
+    restricted_times: ['22:00-06:00']
+  - name: 世博安徽馆
+    code: BLDG_GEN_59
+    type: building
+    lat: 31.7837
+    lon: 117.216
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_59
+    restricted_times: ['22:00-06:00']
+  - name: 安徽国际会展中心A区
+    code: BLDG_COMM_60
+    type: building
+    lat: 31.7834
+    lon: 117.218
+    alt: 25.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 45
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_COMM_60
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_61
+    code: BLDG_GEN_61
+    type: building
+    lat: 31.7769
+    lon: 117.196
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_61
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_62
+    code: BLDG_GEN_62
+    type: building
+    lat: 31.7773
+    lon: 117.196
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_62
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_63
+    code: BLDG_GEN_63
+    type: building
+    lat: 31.7779
+    lon: 117.196
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_63
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_64
+    code: BLDG_GEN_64
+    type: building
+    lat: 31.7785
+    lon: 117.196
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_64
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_65
+    code: BLDG_GEN_65
+    type: building
+    lat: 31.7778
+    lon: 117.196
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_65
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_66
+    code: BLDG_GEN_66
+    type: building
+    lat: 31.7778
+    lon: 117.195
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_66
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_67
+    code: BLDG_GEN_67
+    type: building
+    lat: 31.7782
+    lon: 117.195
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_67
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_68
+    code: BLDG_GEN_68
+    type: building
+    lat: 31.7786
+    lon: 117.195
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_68
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_69
+    code: BLDG_GEN_69
+    type: building
+    lat: 31.7773
+    lon: 117.195
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_69
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_70
+    code: BLDG_GEN_70
+    type: building
+    lat: 31.7767
+    lon: 117.195
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_70
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_71
+    code: BLDG_GEN_71
+    type: building
+    lat: 31.7775
+    lon: 117.195
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_71
+    restricted_times: ['22:00-06:00']
+  - name: 商业建筑_72
+    code: BLDG_COMM_72
+    type: building
+    lat: 31.777
+    lon: 117.195
+    alt: 25.0
+    building_type: commercial
+    sensitivity_level: medium
+    max_altitude: 45
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['commercial', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_COMM_72
+    restricted_times: ['22:00-06:00']
+  - name: 商业建筑_73
+    code: BLDG_COMM_73
+    type: building
+    lat: 31.7763
+    lon: 117.194
+    alt: 25.0
+    building_type: commercial
+    sensitivity_level: medium
+    max_altitude: 45
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['commercial', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_COMM_73
+    restricted_times: ['22:00-06:00']
+  - name: 商业建筑_74
+    code: BLDG_COMM_74
+    type: building
+    lat: 31.7831
+    lon: 117.203
+    alt: 25.0
+    building_type: commercial
+    sensitivity_level: medium
+    max_altitude: 45
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['commercial', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_COMM_74
+    restricted_times: ['22:00-06:00']
+  - name: 商业建筑_75
+    code: BLDG_COMM_75
+    type: building
+    lat: 31.7835
+    lon: 117.202
+    alt: 25.0
+    building_type: commercial
+    sensitivity_level: medium
+    max_altitude: 45
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['commercial', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_COMM_75
+    restricted_times: ['22:00-06:00']
+  - name: 商业建筑_76
+    code: BLDG_COMM_76
+    type: building
+    lat: 31.7835
+    lon: 117.203
+    alt: 25.0
+    building_type: commercial
+    sensitivity_level: medium
+    max_altitude: 45
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['commercial', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_COMM_76
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_77
+    code: BLDG_GEN_77
+    type: building
+    lat: 31.7823
+    lon: 117.201
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_77
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_78
+    code: BLDG_GEN_78
+    type: building
+    lat: 31.7823
+    lon: 117.202
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_78
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_79
+    code: BLDG_GEN_79
+    type: building
+    lat: 31.7823
+    lon: 117.203
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_79
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_80
+    code: BLDG_GEN_80
+    type: building
+    lat: 31.7823
+    lon: 117.204
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_80
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_82
+    code: BLDG_GEN_82
+    type: building
+    lat: 31.7818
+    lon: 117.201
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_82
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_83
+    code: BLDG_GEN_83
+    type: building
+    lat: 31.7818
+    lon: 117.202
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_83
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_84
+    code: BLDG_GEN_84
+    type: building
+    lat: 31.7818
+    lon: 117.203
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_84
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_86
+    code: BLDG_GEN_86
+    type: building
+    lat: 31.7764
+    lon: 117.194
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_86
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_87
+    code: BLDG_GEN_87
+    type: building
+    lat: 31.776
+    lon: 117.195
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_87
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_88
+    code: BLDG_GEN_88
+    type: building
+    lat: 31.776
+    lon: 117.194
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_88
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_89
+    code: BLDG_GEN_89
+    type: building
+    lat: 31.7769
+    lon: 117.194
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_89
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_90
+    code: BLDG_GEN_90
+    type: building
+    lat: 31.7761
+    lon: 117.193
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_90
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_91
+    code: BLDG_GEN_91
+    type: building
+    lat: 31.7757
+    lon: 117.193
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_91
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_92
+    code: BLDG_GEN_92
+    type: building
+    lat: 31.7767
+    lon: 117.193
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_92
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_94
+    code: BLDG_GEN_94
+    type: building
+    lat: 31.7766
+    lon: 117.193
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_94
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_95
+    code: BLDG_GEN_95
+    type: building
+    lat: 31.7766
+    lon: 117.192
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_95
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_96
+    code: BLDG_GEN_96
+    type: building
+    lat: 31.7765
+    lon: 117.193
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_96
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_97
+    code: BLDG_GEN_97
+    type: building
+    lat: 31.7764
+    lon: 117.193
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_97
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_98
+    code: BLDG_GEN_98
+    type: building
+    lat: 31.7762
+    lon: 117.193
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_98
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_99
+    code: BLDG_GEN_99
+    type: building
+    lat: 31.7763
+    lon: 117.192
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_99
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_100
+    code: BLDG_GEN_100
+    type: building
+    lat: 31.7764
+    lon: 117.192
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_100
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_101
+    code: BLDG_GEN_101
+    type: building
+    lat: 31.7759
+    lon: 117.193
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_101
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_102
+    code: BLDG_GEN_102
+    type: building
+    lat: 31.776
+    lon: 117.192
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_102
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_103
+    code: BLDG_GEN_103
+    type: building
+    lat: 31.7761
+    lon: 117.192
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_103
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_104
+    code: BLDG_GEN_104
+    type: building
+    lat: 31.7756
+    lon: 117.193
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_104
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_105
+    code: BLDG_GEN_105
+    type: building
+    lat: 31.7757
+    lon: 117.192
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_105
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_106
+    code: BLDG_GEN_106
+    type: building
+    lat: 31.7758
+    lon: 117.192
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_106
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_107
+    code: BLDG_GEN_107
+    type: building
+    lat: 31.7753
+    lon: 117.193
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_107
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_108
+    code: BLDG_GEN_108
+    type: building
+    lat: 31.7754
+    lon: 117.192
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_108
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_109
+    code: BLDG_GEN_109
+    type: building
+    lat: 31.7755
+    lon: 117.192
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_109
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_110
+    code: BLDG_GEN_110
+    type: building
+    lat: 31.7779
+    lon: 117.195
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_110
+    restricted_times: ['22:00-06:00']
+  - name: 笃行南楼
+    code: BLDG_UNIV_111
+    type: building
+    lat: 31.7673
+    lon: 117.178
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_111
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_112
+    code: BLDG_GEN_112
+    type: building
+    lat: 31.7792
+    lon: 117.224
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_112
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_113
+    code: BLDG_GEN_113
+    type: building
+    lat: 31.7789
+    lon: 117.223
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_113
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_114
+    code: BLDG_GEN_114
+    type: building
+    lat: 31.7799
+    lon: 117.221
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_114
+    restricted_times: ['22:00-06:00']
+  - name: 杏园
+    code: BLDG_GEN_115
+    type: building
+    lat: 31.7733
+    lon: 117.178
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_115
+    restricted_times: ['22:00-06:00']
+  - name: 枣园
+    code: BLDG_GEN_116
+    type: building
+    lat: 31.7729
+    lon: 117.177
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_116
+    restricted_times: ['22:00-06:00']
+  - name: 榴园
+    code: BLDG_GEN_117
+    type: building
+    lat: 31.7721
+    lon: 117.177
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_117
+    restricted_times: ['22:00-06:00']
+  - name: 李园
+    code: BLDG_GEN_118
+    type: building
+    lat: 31.7706
+    lon: 117.177
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_118
+    restricted_times: ['22:00-06:00']
+  - name: 桃园
+    code: BLDG_GEN_119
+    type: building
+    lat: 31.7697
+    lon: 117.176
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_119
+    restricted_times: ['22:00-06:00']
+  - name: 桔园
+    code: BLDG_GEN_120
+    type: building
+    lat: 31.7704
+    lon: 117.175
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_120
+    restricted_times: ['22:00-06:00']
+  - name: 松园
+    code: BLDG_GEN_121
+    type: building
+    lat: 31.7673
+    lon: 117.175
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_121
+    restricted_times: ['22:00-06:00']
+  - name: 梅园
+    code: BLDG_GEN_122
+    type: building
+    lat: 31.7675
+    lon: 117.176
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_122
+    restricted_times: ['22:00-06:00']
+  - name: 竹园
+    code: BLDG_GEN_123
+    type: building
+    lat: 31.7661
+    lon: 117.177
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_123
+    restricted_times: ['22:00-06:00']
+  - name: 槐园
+    code: BLDG_GEN_124
+    type: building
+    lat: 31.7653
+    lon: 117.177
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_124
+    restricted_times: ['22:00-06:00']
+  - name: 枫园
+    code: BLDG_GEN_125
+    type: building
+    lat: 31.7645
+    lon: 117.178
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_125
+    restricted_times: ['22:00-06:00']
+  - name: 桂园
+    code: BLDG_GEN_126
+    type: building
+    lat: 31.7648
+    lon: 117.179
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_126
+    restricted_times: ['22:00-06:00']
+  - name: 笃行北楼
+    code: BLDG_UNIV_127
+    type: building
+    lat: 31.7701
+    lon: 117.178
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_127
+    restricted_times: ['22:00-06:00']
+  - name: 理工A楼
+    code: BLDG_UNIV_128
+    type: building
+    lat: 31.7707
+    lon: 117.181
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_128
+    restricted_times: ['22:00-06:00']
+  - name: 理工B楼
+    code: BLDG_UNIV_129
+    type: building
+    lat: 31.7713
+    lon: 117.181
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_129
+    restricted_times: ['22:00-06:00']
+  - name: 理工C楼
+    code: BLDG_UNIV_130
+    type: building
+    lat: 31.7719
+    lon: 117.181
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_130
+    restricted_times: ['22:00-06:00']
+  - name: 理工D楼
+    code: BLDG_UNIV_131
+    type: building
+    lat: 31.7723
+    lon: 117.181
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_131
+    restricted_times: ['22:00-06:00']
+  - name: 理工E楼
+    code: BLDG_UNIV_132
+    type: building
+    lat: 31.7728
+    lon: 117.181
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_132
+    restricted_times: ['22:00-06:00']
+  - name: 理工G楼
+    code: BLDG_UNIV_133
+    type: building
+    lat: 31.7735
+    lon: 117.182
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_133
+    restricted_times: ['22:00-06:00']
+  - name: 理工H楼
+    code: BLDG_UNIV_134
+    type: building
+    lat: 31.7739
+    lon: 117.182
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_134
+    restricted_times: ['22:00-06:00']
+  - name: 行知楼
+    code: BLDG_UNIV_135
+    type: building
+    lat: 31.7698
+    lon: 117.181
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_135
+    restricted_times: ['22:00-06:00']
+  - name: 艺术楼
+    code: BLDG_UNIV_136
+    type: building
+    lat: 31.7675
+    lon: 117.181
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_136
+    restricted_times: ['22:00-06:00']
+  - name: 人文楼
+    code: BLDG_UNIV_137
+    type: building
+    lat: 31.7665
+    lon: 117.181
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_137
+    restricted_times: ['22:00-06:00']
+  - name: 社科A、B楼
+    code: BLDG_UNIV_138
+    type: building
+    lat: 31.7659
+    lon: 117.182
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_138
+    restricted_times: ['22:00-06:00']
+  - name: 社科C、D楼
+    code: BLDG_UNIV_139
+    type: building
+    lat: 31.7654
+    lon: 117.182
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_139
+    restricted_times: ['22:00-06:00']
+  - name: 行政楼
+    code: BLDG_UNIV_140
+    type: building
+    lat: 31.7635
+    lon: 117.184
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_140
+    restricted_times: ['22:00-06:00']
+  - name: 蕙园1栋
+    code: BLDG_GEN_141
+    type: building
+    lat: 31.7778
+    lon: 117.183
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_141
+    restricted_times: ['22:00-06:00']
+  - name: 蕙园2栋
+    code: BLDG_GEN_142
+    type: building
+    lat: 31.7774
+    lon: 117.182
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_142
+    restricted_times: ['22:00-06:00']
+  - name: 蕙园3栋
+    code: BLDG_GEN_143
+    type: building
+    lat: 31.7775
+    lon: 117.183
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_143
+    restricted_times: ['22:00-06:00']
+  - name: 蕙园4栋
+    code: BLDG_GEN_144
+    type: building
+    lat: 31.7771
+    lon: 117.182
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_144
+    restricted_times: ['22:00-06:00']
+  - name: 蕙园5栋
+    code: BLDG_GEN_145
+    type: building
+    lat: 31.7772
+    lon: 117.183
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_145
+    restricted_times: ['22:00-06:00']
+  - name: 蕙园6栋
+    code: BLDG_GEN_146
+    type: building
+    lat: 31.7768
+    lon: 117.183
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_146
+    restricted_times: ['22:00-06:00']
+  - name: 蕙园7栋
+    code: BLDG_GEN_147
+    type: building
+    lat: 31.7764
+    lon: 117.183
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_147
+    restricted_times: ['22:00-06:00']
+  - name: 蕙园8栋
+    code: BLDG_GEN_148
+    type: building
+    lat: 31.7754
+    lon: 117.182
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_148
+    restricted_times: ['22:00-06:00']
+  - name: 蕙园9栋
+    code: BLDG_GEN_149
+    type: building
+    lat: 31.7759
+    lon: 117.181
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_149
+    restricted_times: ['22:00-06:00']
+  - name: 蕙园10栋
+    code: BLDG_GEN_150
+    type: building
+    lat: 31.7751
+    lon: 117.181
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_150
+    restricted_times: ['22:00-06:00']
+  - name: 研究生餐厅
+    code: BLDG_GEN_151
+    type: building
+    lat: 31.776
+    lon: 117.182
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_151
+    restricted_times: ['22:00-06:00']
+  - name: 研究生院
+    code: BLDG_UNIV_152
+    type: building
+    lat: 31.7748
+    lon: 117.182
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_152
+    restricted_times: ['22:00-06:00']
+  - name: 磬苑宾馆
+    code: BLDG_GEN_153
+    type: building
+    lat: 31.7791
+    lon: 117.182
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_153
+    restricted_times: ['22:00-06:00']
+  - name: 餐饮部基建处
+    code: BLDG_UNIV_154
+    type: building
+    lat: 31.7784
+    lon: 117.182
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_154
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_155
+    code: BLDG_GEN_155
+    type: building
+    lat: 31.7786
+    lon: 117.181
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_155
+    restricted_times: ['22:00-06:00']
+  - name: 磬苑体育馆
+    code: BLDG_GEN_156
+    type: building
+    lat: 31.7768
+    lon: 117.18
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_156
+    restricted_times: ['22:00-06:00']
+  - name: 北体观众席
+    code: BLDG_UNIV_157
+    type: building
+    lat: 31.7748
+    lon: 117.179
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_157
+    restricted_times: ['22:00-06:00']
+  - name: 榴园餐厅
+    code: BLDG_GEN_158
+    type: building
+    lat: 31.7724
+    lon: 117.178
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_158
+    restricted_times: ['22:00-06:00']
+  - name: 桔园餐厅
+    code: BLDG_GEN_159
+    type: building
+    lat: 31.7714
+    lon: 117.176
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_159
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_160
+    code: BLDG_GEN_160
+    type: building
+    lat: 31.7715
+    lon: 117.177
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_160
+    restricted_times: ['22:00-06:00']
+  - name: 教育超市
+    code: BLDG_GEN_161
+    type: building
+    lat: 31.7694
+    lon: 117.176
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_161
+    restricted_times: ['22:00-06:00']
+  - name: 中国邮政
+    code: BLDG_GEN_162
+    type: building
+    lat: 31.7693
+    lon: 117.175
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_162
+    restricted_times: ['22:00-06:00']
+  - name: 适之楼（大学生活动中心）
+    code: BLDG_UNIV_163
+    type: building
+    lat: 31.7683
+    lon: 117.175
+    alt: 15.0
+    building_type: university
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['university', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_163
+    restricted_times: ['22:00-06:00']
+  - name: 梅园餐厅
+    code: BLDG_GEN_164
+    type: building
+    lat: 31.7665
+    lon: 117.176
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_164
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_166
+    code: BLDG_GEN_166
+    type: building
+    lat: 31.7661
+    lon: 117.176
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_166
+    restricted_times: ['22:00-06:00']
+  - name: 桂园餐厅
+    code: BLDG_GEN_167
+    type: building
+    lat: 31.7653
+    lon: 117.178
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_167
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_168
+    code: BLDG_GEN_168
+    type: building
+    lat: 31.7639
+    lon: 117.179
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_168
+    restricted_times: ['22:00-06:00']
+  - name: 博学北楼
+    code: BLDG_UNIV_169
+    type: building
+    lat: 31.7705
+    lon: 117.179
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_169
+    restricted_times: ['22:00-06:00']
+  - name: 博学南楼
+    code: BLDG_UNIV_170
+    type: building
+    lat: 31.7666
+    lon: 117.18
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_170
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_171
+    code: BLDG_GEN_171
+    type: building
+    lat: 31.772
+    lon: 117.176
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_171
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_172
+    code: BLDG_GEN_172
+    type: building
+    lat: 31.7719
+    lon: 117.176
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_172
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_173
+    code: BLDG_GEN_173
+    type: building
+    lat: 31.7673
+    lon: 117.173
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_173
+    restricted_times: ['22:00-06:00']
+  - name: 学校建筑_174
+    code: BLDG_SCH_174
+    type: building
+    lat: 31.7667
+    lon: 117.175
+    alt: 15.0
+    building_type: school
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['school', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_SCH_174
+    restricted_times: ['22:00-06:00']
+  - name: 学校建筑_175
+    code: BLDG_SCH_175
+    type: building
+    lat: 31.7684
+    lon: 117.182
+    alt: 15.0
+    building_type: school
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['school', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_SCH_175
+    restricted_times: ['22:00-06:00']
+  - name: 学校建筑_176
+    code: BLDG_SCH_176
+    type: building
+    lat: 31.7717
+    lon: 117.18
+    alt: 15.0
+    building_type: school
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['school', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_SCH_176
+    restricted_times: ['22:00-06:00']
+  - name: 学校建筑_177
+    code: BLDG_SCH_177
+    type: building
+    lat: 31.7712
+    lon: 117.175
+    alt: 15.0
+    building_type: school
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['school', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_SCH_177
+    restricted_times: ['22:00-06:00']
+  - name: 现代实验技术中心
+    code: BLDG_UNIV_178
+    type: building
+    lat: 31.7745
+    lon: 117.181
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_178
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_179
+    code: BLDG_GEN_179
+    type: building
+    lat: 31.7689
+    lon: 117.182
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_179
+    restricted_times: ['22:00-06:00']
+  - name: 大学建筑_180
+    code: BLDG_UNIV_180
+    type: building
+    lat: 31.7747
+    lon: 117.182
+    alt: 15.0
+    building_type: university
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['university', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_180
+    restricted_times: ['22:00-06:00']
+  - name: 文典阁
+    code: BLDG_GEN_181
+    type: building
+    lat: 31.7686
+    lon: 117.178
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_181
+    restricted_times: ['22:00-06:00']
+  - name: 理工F楼
+    code: BLDG_UNIV_182
+    type: building
+    lat: 31.7731
+    lon: 117.181
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_182
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_183
+    code: BLDG_GEN_183
+    type: building
+    lat: 31.7614
+    lon: 117.186
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_183
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_184
+    code: BLDG_GEN_184
+    type: building
+    lat: 31.7677
+    lon: 117.2
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_184
+    restricted_times: ['22:00-06:00']
+  - name: 合肥江淮新发汽车有限公司
+    code: BLDG_GEN_185
+    type: building
+    lat: 31.7642
+    lon: 117.227
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_185
+    restricted_times: ['22:00-06:00']
+  - name: 金经源大酒店
+    code: BLDG_GEN_186
+    type: building
+    lat: 31.7825
+    lon: 117.225
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_186
+    restricted_times: ['22:00-06:00']
+  - name: 合肥明珠瑞士酒店
+    code: BLDG_GEN_187
+    type: building
+    lat: 31.7791
+    lon: 117.223
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_187
+    restricted_times: ['22:00-06:00']
+  - name: 大观音庵
+    code: BLDG_GEN_188
+    type: building
+    lat: 31.7725
+    lon: 117.213
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_188
+    restricted_times: ['22:00-06:00']
+  - name: 合肥市公安局经济技术开发区分局
+    code: BLDG_GEN_189
+    type: building
+    lat: 31.7706
+    lon: 117.224
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_189
+    restricted_times: ['22:00-06:00']
+  - name: 竹溪
+    code: BLDG_GEN_190
+    type: building
+    lat: 31.7835
+    lon: 117.181
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_190
+    restricted_times: ['22:00-06:00']
+  - name: 合肥华润神鹿药业有限责任公司
+    code: BLDG_GEN_191
+    type: building
+    lat: 31.77
+    lon: 117.212
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_191
+    restricted_times: ['22:00-06:00']
+  - name: 合肥泰凌生物制药有限公司
+    code: BLDG_GEN_192
+    type: building
+    lat: 31.7657
+    lon: 117.208
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_192
+    restricted_times: ['22:00-06:00']
+  - name: 格林豪泰酒店
+    code: BLDG_GEN_193
+    type: building
+    lat: 31.7616
+    lon: 117.218
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_193
+    restricted_times: ['22:00-06:00']
+  - name: 合肥华昌汽车部件有限公司
+    code: BLDG_GEN_194
+    type: building
+    lat: 31.7649
+    lon: 117.215
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_194
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_195
+    code: BLDG_GEN_195
+    type: building
+    lat: 31.7738
+    lon: 117.184
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_195
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_196
+    code: BLDG_GEN_196
+    type: building
+    lat: 31.772
+    lon: 117.183
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_196
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_197
+    code: BLDG_GEN_197
+    type: building
+    lat: 31.7712
+    lon: 117.183
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_197
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_198
+    code: BLDG_GEN_198
+    type: building
+    lat: 31.7744
+    lon: 117.184
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_198
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_199
+    code: BLDG_GEN_199
+    type: building
+    lat: 31.7757
+    lon: 117.185
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_199
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_200
+    code: BLDG_GEN_200
+    type: building
+    lat: 31.775
+    lon: 117.187
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_200
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_201
+    code: BLDG_GEN_201
+    type: building
+    lat: 31.776
+    lon: 117.188
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_201
+    restricted_times: ['22:00-06:00']
+  - name: 维也纳酒店_合肥明珠广场店
+    code: BLDG_GEN_202
+    type: building
+    lat: 31.765
+    lon: 117.204
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_202
+    restricted_times: ['22:00-06:00']
+  - name: 合肥供水集团有限公司经开区供水分公司
+    code: BLDG_GEN_203
+    type: building
+    lat: 31.7654
+    lon: 117.204
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_203
+    restricted_times: ['22:00-06:00']
+  - name: 安徽省电力工程行业协会
+    code: BLDG_GEN_204
+    type: building
+    lat: 31.7734
+    lon: 117.211
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_204
+    restricted_times: ['22:00-06:00']
+  - name: 合肥海关
+    code: BLDG_GEN_205
+    type: building
+    lat: 31.7809
+    lon: 117.205
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_205
+    restricted_times: ['22:00-06:00']
+  - name: 合肥汉海极地海洋世界
+    code: BLDG_GEN_206
+    type: building
+    lat: 31.7829
+    lon: 117.21
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_206
+    restricted_times: ['22:00-06:00']
+  - name: 中环艺术馆
+    code: BLDG_GEN_207
+    type: building
+    lat: 31.7828
+    lon: 117.199
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_207
+    restricted_times: ['22:00-06:00']
+  - name: 合肥经济技术开发区管理委员会
+    code: BLDG_GEN_208
+    type: building
+    lat: 31.7805
+    lon: 117.203
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_208
+    restricted_times: ['22:00-06:00']
+  - name: 桃花派出所
+    code: BLDG_GEN_209
+    type: building
+    lat: 31.7758
+    lon: 117.165
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_209
+    restricted_times: ['22:00-06:00']
+  - name: 文峰中心
+    code: BLDG_COMM_210
+    type: building
+    lat: 31.7796
+    lon: 117.217
+    alt: 25.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 45
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_COMM_210
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_211
+    code: BLDG_GEN_211
+    type: building
+    lat: 31.7759
+    lon: 117.2
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_211
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_212
+    code: BLDG_GEN_212
+    type: building
+    lat: 31.7745
+    lon: 117.204
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_212
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_213
+    code: BLDG_GEN_213
+    type: building
+    lat: 31.7529
+    lon: 117.165
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_213
+    restricted_times: ['22:00-06:00']
+  - name: 七栋宿舍楼
+    code: BLDG_GEN_214
+    type: building
+    lat: 31.755
+    lon: 117.222
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_214
+    restricted_times: ['22:00-06:00']
+  - name: 八栋宿舍楼
+    code: BLDG_GEN_215
+    type: building
+    lat: 31.755
+    lon: 117.223
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_215
+    restricted_times: ['22:00-06:00']
+  - name: 逸夫楼
+    code: BLDG_UNIV_216
+    type: building
+    lat: 31.7533
+    lon: 117.225
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_216
+    restricted_times: ['22:00-06:00']
+  - name: 躬行楼
+    code: BLDG_UNIV_217
+    type: building
+    lat: 31.7525
+    lon: 117.223
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_217
+    restricted_times: ['22:00-06:00']
+  - name: 履知楼
+    code: BLDG_UNIV_218
+    type: building
+    lat: 31.7525
+    lon: 117.224
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_218
+    restricted_times: ['22:00-06:00']
+  - name: 行知楼
+    code: BLDG_UNIV_219
+    type: building
+    lat: 31.755
+    lon: 117.225
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_219
+    restricted_times: ['22:00-06:00']
+  - name: 合肥师范学院大学生创业孵化基地
+    code: BLDG_UNIV_220
+    type: building
+    lat: 31.7538
+    lon: 117.223
+    alt: 15.0
+    building_type: university
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['university', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_220
+    restricted_times: ['22:00-06:00']
+  - name: 五栋宿舍楼
+    code: BLDG_GEN_221
+    type: building
+    lat: 31.7543
+    lon: 117.221
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_221
+    restricted_times: ['22:00-06:00']
+  - name: 四栋宿舍楼
+    code: BLDG_GEN_222
+    type: building
+    lat: 31.7536
+    lon: 117.221
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_222
+    restricted_times: ['22:00-06:00']
+  - name: 三栋宿舍楼
+    code: BLDG_GEN_223
+    type: building
+    lat: 31.7529
+    lon: 117.221
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_223
+    restricted_times: ['22:00-06:00']
+  - name: 研究生宿舍
+    code: BLDG_GEN_224
+    type: building
+    lat: 31.7523
+    lon: 117.221
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_224
+    restricted_times: ['22:00-06:00']
+  - name: 十栋宿舍楼
+    code: BLDG_GEN_225
+    type: building
+    lat: 31.7542
+    lon: 117.223
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_225
+    restricted_times: ['22:00-06:00']
+  - name: 实训基地
+    code: BLDG_UNIV_226
+    type: building
+    lat: 31.7542
+    lon: 117.224
+    alt: 15.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 35
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_UNIV_226
+    restricted_times: ['22:00-06:00']
+  - name: 合肥师范学院锦绣校区快递站
+    code: BLDG_COMM_227
+    type: building
+    lat: 31.7548
+    lon: 117.222
+    alt: 25.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 45
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_COMM_227
+    restricted_times: ['22:00-06:00']
+  - name: 六栋宿舍楼
+    code: BLDG_GEN_228
+    type: building
+    lat: 31.7546
+    lon: 117.222
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_228
+    restricted_times: ['22:00-06:00']
+  - name: 九栋宿舍楼
+    code: BLDG_GEN_229
+    type: building
+    lat: 31.7546
+    lon: 117.223
+    alt: 12.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 32
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_229
+    restricted_times: ['22:00-06:00']
+  - name: 安徽宝捷汽车销售服务有限公司
+    code: BLDG_GEN_230
+    type: building
+    lat: 31.7594
+    lon: 117.201
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_230
+    restricted_times: ['22:00-06:00']
+  - name: 皖A·NO_1餐吧
+    code: BLDG_GEN_231
+    type: building
+    lat: 31.7757
+    lon: 117.209
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_231
+    restricted_times: ['22:00-06:00']
+  - name: 安徽瑞森汽车销售有限公司
+    code: BLDG_GEN_232
+    type: building
+    lat: 31.7729
+    lon: 117.213
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_232
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_233
+    code: BLDG_GEN_233
+    type: building
+    lat: 31.7777
+    lon: 117.222
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_233
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_234
+    code: BLDG_GEN_234
+    type: building
+    lat: 31.7781
+    lon: 117.221
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_234
+    restricted_times: ['22:00-06:00']
+  - name: 中国化学工程第三建设有限公司
+    code: BLDG_GEN_235
+    type: building
+    lat: 31.7764
+    lon: 117.227
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_235
+    restricted_times: ['22:00-06:00']
+  - name: 安徽麦堡食品工业有限公司
+    code: BLDG_GEN_236
+    type: building
+    lat: 31.7722
+    lon: 117.21
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_236
+    restricted_times: ['22:00-06:00']
+  - name: 安徽国际会展中心B区
+    code: BLDG_COMM_237
+    type: building
+    lat: 31.7809
+    lon: 117.216
+    alt: 25.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 45
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_COMM_237
+    restricted_times: ['22:00-06:00']
+  - name: 通用建筑_238
+    code: BLDG_GEN_238
+    type: building
+    lat: 31.7774
+    lon: 117.162
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_238
+    restricted_times: ['22:00-06:00']
+  - name: 竹园浴室
+    code: BLDG_GEN_239
+    type: building
+    lat: 31.7658
+    lon: 117.176
+    alt: 10.0
+    building_type: general
+    sensitivity_level: medium
+    max_altitude: 30
+    allowed_operations: ['delivery', 'inspection', 'monitoring']
+    access_restrictions: ['general', 'authorized_personnel', 'medium_building']
+    area_sqm: 100.0
+    osm_id: generated_BLDG_GEN_239
+    restricted_times: ['22:00-06:00']

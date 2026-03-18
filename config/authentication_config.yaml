@@ -1,0 +1,268 @@
+# 身份认证配置文件
+# Authentication Configuration
+
+# 认证提供者配置
+authentication:
+  # 默认认证提供者
+  default_provider: "x509_certificate"
+  
+  # 认证超时设置
+  timeout_ms: 10000
+  
+  # 认证重试设置
+  retry_count: 3
+  retry_delay_ms: 1000
+  
+  # 认证提供者列表
+  providers:
+    # X.509证书认证
+    - type: "x509_certificate"
+      name: "government_ca"
+      enabled: true
+      priority: 100
+      config:
+        # 可信CA证书
+        ca_certificates:
+          - path: "./config/certificates/test_ca_cert.pem"
+            name: "测试CA"
+            description: "测试环境根证书"
+            
+        # 证书撤销列表
+        crl_files:
+          - path: "./config/certificates/government_crl.pem"
+            update_interval_hours: 24
+          - path: "./config/certificates/commercial_crl.pem"
+            update_interval_hours: 12
+            
+        # 证书验证选项
+        verification:
+          check_expiry: true
+          check_signature: true
+          check_chain: true
+          check_crl: true
+          allow_self_signed: false
+          max_chain_length: 5
+          
+        # 属性提取规则
+        attribute_extraction:
+          organization: "subject.organizationName"
+          role: "subject.organizationalUnitName"
+          trust_level: "extensions.customTrustLevel"
+          certificate_type: "extensions.certificateType"
+          
+    # JWT令牌认证
+    - type: "jwt_token"
+      name: "commercial_jwt"
+      enabled: true
+      priority: 50
+      config:
+        # JWT验证配置
+        verification:
+          algorithm: "RS256"
+          public_key_file: "./config/certificates/jwt_public_key.pem"
+          issuer: "drone-authority.gov"
+          audience: "drone-access-control"
+          
+        # 令牌有效性检查
+        validation:
+          check_expiry: true
+          check_issuer: true
+          check_audience: true
+          clock_skew_seconds: 300
+          
+        # 声明映射
+        claim_mapping:
+          organization: "org"
+          role: "role"
+          trust_level: "trust_lvl"
+          permissions: "perms"
+          
+    # API密钥认证（用于系统间通信）
+    - type: "api_key"
+      name: "system_api_key"
+      enabled: true
+      priority: 30
+      config:
+        # API密钥存储
+        key_store:
+          type: "file"
+          path: "./config/api_keys.json"
+          
+        # 密钥验证
+        validation:
+          check_expiry: true
+          rate_limiting: true
+          max_requests_per_minute: 1000
+          
+        # 属性映射
+        attribute_mapping:
+          organization: "system"
+          role: "api_client"
+          trust_level: "medium"
+
+# 认证策略配置
+authentication_policies:
+  # 基于组织的认证策略
+  organization_policies:
+    government:
+      required_auth_methods: ["x509_certificate"]
+      min_trust_level: "high"
+      additional_verification: false
+      
+    commercial:
+      required_auth_methods: ["x509_certificate", "jwt_token"]
+      min_trust_level: "medium"
+      additional_verification: true
+      
+    individual:
+      required_auth_methods: ["jwt_token"]
+      min_trust_level: "low"
+      additional_verification: true
+      
+  # 基于操作类型的认证策略
+  operation_policies:
+    emergency:
+      bypass_normal_auth: true
+      emergency_auth_code: "${EMERGENCY_AUTH_CODE}"
+      
+    maintenance:
+      required_auth_methods: ["x509_certificate"]
+      additional_permissions: ["maintenance_access"]
+      
+    delivery:
+      required_auth_methods: ["jwt_token"]
+      business_hours_only: true
+      
+# 属性提供者配置
+attribute_providers:
+  # 环境属性提供者
+  - type: "environment"
+    name: "env_provider"
+    enabled: true
+    config:
+      # 天气服务配置
+      weather_service:
+        provider: "openweathermap"
+        api_key: "${WEATHER_API_KEY}"
+        update_interval_minutes: 15
+        cache_duration_minutes: 30
+        
+      # 时间服务配置
+      time_service:
+        timezone: "Asia/Shanghai"
+        ntp_servers: ["ntp.aliyun.com", "time.windows.com"]
+        
+      # 系统状态
+      system_status:
+        check_interval_seconds: 30
+        
+  # 数据库属性提供者
+  - type: "database"
+    name: "db_provider"
+    enabled: true
+    config:
+      # 数据库连接
+      connection:
+        type: "postgresql"
+        host: "localhost"
+        port: 5432
+        database: "drone_attributes"
+        username: "${DB_USERNAME}"
+        password: "${DB_PASSWORD}"
+        
+      # 查询配置
+      queries:
+        drone_attributes: "SELECT * FROM drone_attributes WHERE drone_id = $1"
+        organization_info: "SELECT * FROM organizations WHERE org_id = $1"
+        
+      # 缓存配置
+      cache:
+        enabled: true
+        ttl_minutes: 60
+        max_entries: 10000
+        
+  # 外部API属性提供者
+  - type: "external_api"
+    name: "registry_provider"
+    enabled: true
+    config:
+      # API配置
+      endpoint: "https://drone-registry.gov/api/v1"
+      api_key: "${REGISTRY_API_KEY}"
+      timeout_ms: 5000
+      
+      # 重试配置
+      retry_count: 3
+      retry_delay_ms: 1000
+      
+      # 缓存配置
+      cache:
+        enabled: true
+        ttl_minutes: 30
+
+# 安全配置
+security:
+  # 密码策略
+  password_policy:
+    min_length: 12
+    require_uppercase: true
+    require_lowercase: true
+    require_numbers: true
+    require_symbols: true
+    
+  # 会话管理
+  session_management:
+    timeout_minutes: 30
+    max_concurrent_sessions: 5
+    session_token_length: 32
+    
+  # 审计配置
+  audit:
+    log_all_auth_attempts: true
+    log_failed_attempts: true
+    log_attribute_access: true
+    retention_days: 90
+    
+  # 防护措施
+  protection:
+    # 暴力破解防护
+    brute_force_protection:
+      enabled: true
+      max_attempts: 5
+      lockout_duration_minutes: 15
+      
+    # 速率限制
+    rate_limiting:
+      enabled: true
+      requests_per_minute: 100
+      burst_size: 20
+      
+# 监控和告警
+monitoring:
+  # 认证指标
+  metrics:
+    - name: "auth_success_rate"
+      description: "认证成功率"
+      threshold: 0.95
+      
+    - name: "auth_response_time"
+      description: "认证响应时间"
+      threshold_ms: 1000
+      
+    - name: "failed_auth_count"
+      description: "认证失败次数"
+      threshold_per_hour: 100
+      
+  # 告警规则
+  alerts:
+    - name: "high_auth_failure_rate"
+      condition: "auth_success_rate < 0.9"
+      severity: "warning"
+      
+    - name: "auth_timeout"
+      condition: "auth_response_time > 5000"
+      severity: "error"
+      
+    - name: "suspicious_activity"
+      condition: "failed_auth_count > 50 in 10 minutes"
+      severity: "critical"

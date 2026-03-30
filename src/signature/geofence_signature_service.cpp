@@ -45,17 +45,13 @@ GeofenceSignatureService::GeofenceSignatureService()
     , sanitizer_sk_(0)
     , u_s_(0)
     , dss_ms_initialized_(false) {
-    std::cout << "GeofenceSignatureService initialized" << std::endl;
 }
 
 GeofenceSignatureService::~GeofenceSignatureService() {
-    std::cout << "GeofenceSignatureService destroyed" << std::endl;
 }
 
 bool GeofenceSignatureService::initialize(const std::string& private_key_file, 
                                          const std::string& public_key_file) {
-    std::cout << "Initializing GeofenceSignatureService with keys..." << std::endl;
-    
     if (!loadPrivateKey(private_key_file)) {
         std::cerr << "Failed to load private key from: " << private_key_file << std::endl;
         return false;
@@ -66,7 +62,6 @@ bool GeofenceSignatureService::initialize(const std::string& private_key_file,
         return false;
     }
     
-    std::cout << "GeofenceSignatureService initialized successfully" << std::endl;
     return true;
 }
 
@@ -1497,14 +1492,10 @@ bool GeofenceSignatureService::initializeDSSMSGeofence(const std::string& saniti
     if (!u_s_hex.empty()) {
         u_s_ = hexStringToMPZ(u_s_hex);
         dss_ms_->setU_s(u_s_);
-        std::cout << "[GeofenceSignatureService] 已从参数设置DSS-MS u_s" << std::endl;
     } else {
         // 尝试从默认文件加载
-        if (loadDSSMSPublicParamsFromFile("dss_ms_public_params.json")) {
-            std::cout << "[GeofenceSignatureService] 已从文件加载DSS-MS公共参数" << std::endl;
-        } else {
+        if (!loadDSSMSPublicParamsFromFile("dss_ms_public_params.json")) {
             std::cerr << "[GeofenceSignatureService] 警告：未提供u_s参数且无法从文件加载" << std::endl;
-            std::cerr << "   请确保dss_ms_public_params.json文件存在" << std::endl;
         }
     }
     
@@ -1517,19 +1508,14 @@ bool GeofenceSignatureService::initializeDSSMSGeofence(const std::string& saniti
     // 加载清洗者私钥：优先使用传入参数，否则尝试从文件加载
     if (!sanitizer_sk_hex.empty()) {
         sanitizer_sk_ = hexStringToMPZ(sanitizer_sk_hex);
-        std::cout << "[GeofenceSignatureService] 已从参数设置清洗者私钥" << std::endl;
     } else {
         // 尝试从默认文件加载
-        if (loadGCSSanitizerKeyFromFile("gcs_sanitizer_key.json")) {
-            std::cout << "[GeofenceSignatureService] 已从文件加载GCS清洗者私钥" << std::endl;
-        } else {
+        if (!loadGCSSanitizerKeyFromFile("gcs_sanitizer_key.json")) {
             std::cerr << "[GeofenceSignatureService] 警告：未提供清洗者私钥且无法从文件加载" << std::endl;
-            std::cerr << "   请确保gcs_sanitizer_key.json文件存在" << std::endl;
         }
     }
     
     dss_ms_initialized_ = true;
-    std::cout << "[GeofenceSignatureService] DSS-MS围栏签名功能初始化成功" << std::endl;
     return true;
 }
 
@@ -1540,7 +1526,6 @@ bool GeofenceSignatureService::setSanitizerPrivateKey(const std::string& sanitiz
     }
     
     sanitizer_sk_ = hexStringToMPZ(sanitizer_sk_hex);
-    std::cout << "[GeofenceSignatureService] 清洗者私钥已设置" << std::endl;
     return true;
 }
 
@@ -1577,8 +1562,6 @@ bool GeofenceSignatureService::loadDSSSignedGeofence(const std::string& filepath
         original_dss_signed_geofence_.ta_pk = ta_pk;
         original_dss_signed_geofence_.sanitizer_pk = sanitizer_pk;
         
-        std::cout << "[GeofenceSignatureService] 已加载围栏签名: " << geofence.fence_id_list.size() 
-                  << " 个围栏ID" << std::endl;
         return true;
         
     } catch (const std::exception& e) {

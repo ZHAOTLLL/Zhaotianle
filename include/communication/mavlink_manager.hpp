@@ -18,6 +18,11 @@
 #include <cstdint>
 #include <string>
 
+// 添加Boost.Asio依赖
+#ifdef USE_BOOST_ASIO
+#include <boost/asio.hpp>
+#endif
+
 #ifdef HAVE_MAVSDK
 #include <mavsdk/mavsdk.h>
 #include <mavsdk/component_type.h>
@@ -118,7 +123,13 @@ public:
     void runAuthenticationCycleOnce();
     void runReconnectionCycleOnce();
 
+    // 边缘设备管理
+    void registerEdgeDevice(const std::string& device_id, const std::string& device_name, const std::string& location);
+    void unregisterEdgeDevice(const std::string& device_id);
+    void updateEdgeDeviceStatus(const std::string& device_id, bool online);
+
 private:
+    // 无人机连接信息
     struct DroneConnection {
         DroneId drone_id;
         std::string connection_url;
@@ -153,6 +164,24 @@ private:
 #endif
             {}
     };
+
+    // 边缘设备信息
+    struct EdgeDeviceInfo {
+        std::string device_id;
+        std::string device_name;
+        std::string location;
+        bool online;
+        std::chrono::system_clock::time_point last_heartbeat;
+    };
+
+    // 遥测数据处理
+    void processDroneTelemetry(DroneId drone_id, DroneConnection* conn);
+    
+    // 边缘设备管理
+    void updateDronePosition(DroneId drone_id, double lat, double lon);
+    std::string getBestEdgeDeviceForDrone(DroneId drone_id);
+    void assignDroneToEdgeDevice(DroneId drone_id, const std::string& edge_device_id);
+    void switchDroneEdgeDevice(DroneId drone_id, const std::string& new_edge_device_id);
 
     // 内部方法
     void connectionWorker();
@@ -220,11 +249,21 @@ private:
     std::map<uint64_t, DroneId> system_key_to_drone_id_;
     
     std::atomic<bool> running_;
+    
+    // Boost.Asio事件循环
+#ifdef USE_BOOST_ASIO
+    std::unique_ptr<boost::asio::io_context> io_context_;
+    std::unique_ptr<boost::asio::io_context::work> work_;
+    std::vector<std::thread> asio_threads_;
+    static constexpr std::size_t ASIO_THREAD_POOL_SIZE = 4;
+#else
+    // 兼容模式：保留原有的轮询线程
     std::thread connection_thread_;
     std::thread telemetry_thread_;
     std::thread heartbeat_thread_;
     std::thread authentication_thread_;
     std::thread reconnection_thread_;
+#endif
     
     std::vector<ConnectionCallback> connection_callbacks_;
     std::vector<TelemetryCallback> telemetry_callbacks_;
@@ -273,6 +312,12 @@ private:
     std::chrono::steady_clock::time_point last_telemetry_status_report_;
     std::chrono::steady_clock::time_point last_telemetry_callback_time_;
     int total_telemetry_callbacks_processed_{0};
+    
+    // 边缘设备管理
+    std::mutex edge_devices_mutex_;
+    std::map<std::string, EdgeDeviceInfo> edge_devices_;
+    std::map<std::string, std::vector<DroneId>> edge_device_to_drones_;
+    std::map<DroneId, std::string> drone_to_edge_device_;
     
     // 配置参数
     static constexpr int MAX_RETRY_COUNT = 3;

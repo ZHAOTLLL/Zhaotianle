@@ -294,6 +294,102 @@ link_miracl_target(analyze_token_sizes)
 # ------------------------------------------------------------------------------
 # Install
 # ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# 边缘设备程序
+# ------------------------------------------------------------------------------
+if(DRONE_GRPC_USE_CONFIG OR DRONE_GRPC_USE_PKGCONFIG)
+    add_executable(edge_device_app
+        src/edge/edge_device_main.cpp
+        src/edge/edge_device_manager.cpp
+        src/communication/mavlink_manager.cpp
+        src/state/drone_state_manager.cpp
+        src/access_control/access_control_engine.cpp
+        src/access_control/abac_policy_engine.cpp
+        src/access_control/expression_evaluator.cpp
+        src/access_control/access_decision_generator.cpp
+        src/access_control/policy_config_loader.cpp
+        src/authentication/authentication_provider.cpp
+        src/authentication/authentication_provider_factory.cpp
+        src/authentication/x509_certificate_provider.cpp
+        src/attributes/attribute_provider.cpp
+        src/attributes/attribute_aggregator.cpp
+        src/attributes/environment_attribute_provider.cpp
+        src/attributes/database_attribute_provider.cpp
+        src/resources/airspace_resource_manager.cpp
+        src/signature/geofence_signature_service.cpp
+        src/signature/dss_ms_signature.cpp
+        src/signature/mission_signature_verifier.cpp
+        src/flight_control/flight_control_module.cpp
+        src/flight_control/flight_plan.cpp
+        src/error/error_recovery_manager.cpp
+        src/error/security_violation_handler.cpp
+        "${PROTO_PB_CC}" "${PROTO_GRPC_CC}"
+    )
+    if(DRONE_GRPC_USE_CONFIG)
+        add_dependencies(edge_device_app proto_gen)
+        target_include_directories(edge_device_app PRIVATE "${PROTO_GEN_DIR}" ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/src ${MIRACL_CORE_DIR})
+        target_link_libraries(edge_device_app
+            gRPC::grpc++ gRPC::grpc++_reflection protobuf::libprotobuf
+            pthread yaml-cpp ${MIRACL_CORE_LIB} ${GMP_LIB}
+            OpenSSL::SSL OpenSSL::Crypto nlohmann_json::nlohmann_json
+        )
+    else()
+        add_dependencies(edge_device_app proto_gen_pc)
+        target_include_directories(edge_device_app PRIVATE "${PROTO_GEN_DIR}" ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/src ${MIRACL_CORE_DIR} ${GRPC_INCLUDE_DIRS} ${Protobuf_INCLUDE_DIRS})
+        target_link_libraries(edge_device_app
+            ${GRPC_LIBRARIES} ${Protobuf_LIBRARIES}
+            pthread yaml-cpp ${MIRACL_CORE_LIB} ${GMP_LIB}
+            OpenSSL::SSL OpenSSL::Crypto nlohmann_json::nlohmann_json
+        )
+    endif()
+    target_compile_definitions(edge_device_app PRIVATE HAVE_GRPC HAVE_NLOHMANN_JSON)
+    if(Boost_FOUND)
+        target_link_libraries(edge_device_app Boost::system)
+        target_compile_definitions(edge_device_app PRIVATE USE_BOOST_ASIO USE_CONCURRENT_MAVLINK)
+    endif()
+    if(MAVSDK_FOUND)
+        target_link_libraries(edge_device_app MAVSDK::mavsdk)
+        target_compile_definitions(edge_device_app PRIVATE HAVE_MAVSDK)
+    endif()
+    install(TARGETS edge_device_app DESTINATION bin)
+    message(STATUS "edge_device_app: enabled")
+else()
+    message(STATUS "edge_device_app: skipped (need gRPC/Protobuf)")
+endif()
+
+# ------------------------------------------------------------------------------
+# 数据库服务程序
+# ------------------------------------------------------------------------------
+if(DRONE_GRPC_USE_CONFIG OR DRONE_GRPC_USE_PKGCONFIG)
+    add_executable(database_service_app
+        src/database/database_service_main.cpp
+        src/database/database_manager.cpp
+        "${PROTO_PB_CC}" "${PROTO_GRPC_CC}"
+    )
+    if(DRONE_GRPC_USE_CONFIG)
+        add_dependencies(database_service_app proto_gen)
+        target_include_directories(database_service_app PRIVATE "${PROTO_GEN_DIR}" ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/src ${MIRACL_CORE_DIR})
+        target_link_libraries(database_service_app
+            gRPC::grpc++ gRPC::grpc++_reflection protobuf::libprotobuf
+            pthread yaml-cpp ${MIRACL_CORE_LIB} ${GMP_LIB}
+            OpenSSL::SSL OpenSSL::Crypto nlohmann_json::nlohmann_json
+        )
+    else()
+        add_dependencies(database_service_app proto_gen_pc)
+        target_include_directories(database_service_app PRIVATE "${PROTO_GEN_DIR}" ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/src ${MIRACL_CORE_DIR} ${GRPC_INCLUDE_DIRS} ${Protobuf_INCLUDE_DIRS})
+        target_link_libraries(database_service_app
+            ${GRPC_LIBRARIES} ${Protobuf_LIBRARIES}
+            pthread yaml-cpp ${MIRACL_CORE_LIB} ${GMP_LIB}
+            OpenSSL::SSL OpenSSL::Crypto nlohmann_json::nlohmann_json
+        )
+    endif()
+    target_compile_definitions(database_service_app PRIVATE HAVE_GRPC HAVE_NLOHMANN_JSON)
+    install(TARGETS database_service_app DESTINATION bin)
+    message(STATUS "database_service_app: enabled")
+else()
+    message(STATUS "database_service_app: skipped (need gRPC/Protobuf)")
+endif()
+
 install(TARGETS ${PROJECT_NAME} ta_service gen_ed25519_certs test_decrypt_ground
     test_mission_signature_verifier test_geofence_sanitizer test_fcsacm_complete_flow test_fcsacm_star_complete_flow
     generate_px4_geofence_tokens generate_enhanced_baseline_token analyze_token_sizes

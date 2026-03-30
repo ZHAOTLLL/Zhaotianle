@@ -25,6 +25,7 @@
 #include <mavlink/mavlink_types.h>
 #include <mavlink/common/mavlink.h>
 #endif
+#include <optional>
 
 
 namespace drone_control {
@@ -48,11 +49,46 @@ bool MAVLinkManager::start() {
     
     running_.store(true);
     
+#ifdef USE_BOOST_ASIO
+    // 初始化Boost.Asio事件循环
+    io_context_ = std::make_unique<boost::asio::io_context>();
+    work_ = std::make_unique<boost::asio::io_context::work>(*io_context_);
+    
+    // 启动线程池
+    asio_threads_.resize(ASIO_THREAD_POOL_SIZE);
+    for (std::size_t i = 0; i < ASIO_THREAD_POOL_SIZE; ++i) {
+        asio_threads_[i] = std::thread([this]() {
+            io_context_->run();
+        });
+    }
+    
+    // 发布初始任务
+    boost::asio::post(*io_context_, [this]() {
+        runConnectionCycleOnce();
+    });
+    boost::asio::post(*io_context_, [this]() {
+        runTelemetryCycleOnce();
+    });
+    boost::asio::post(*io_context_, [this]() {
+        runHeartbeatCycleOnce();
+    });
+    boost::asio::post(*io_context_, [this]() {
+        runAuthenticationCycleOnce();
+    });
+    boost::asio::post(*io_context_, [this]() {
+        runReconnectionCycleOnce();
+    });
+    
+    std::cout << "MAVLinkManager started with Boost.Asio event loop" << std::endl;
+#else
+    // 兼容模式：使用原有轮询线程
     connection_thread_ = std::thread(&MAVLinkManager::connectionWorker, this);
     telemetry_thread_ = std::thread(&MAVLinkManager::telemetryWorker, this);
     heartbeat_thread_ = std::thread(&MAVLinkManager::heartbeatChecker, this);
     authentication_thread_ = std::thread(&MAVLinkManager::authenticationWorker, this);
     reconnection_thread_ = std::thread(&MAVLinkManager::reconnectionWorker, this);
+#endif
+    
     return true;
 }
 
@@ -68,7 +104,30 @@ void MAVLinkManager::stop() {
     
     running_.store(false);
     
-    // 等待工作线程结束
+#ifdef USE_BOOST_ASIO
+    // 停止Boost.Asio事件循环
+    if (work_) {
+        work_.reset();
+    }
+    if (io_context_) {
+        io_context_->stop();
+    }
+    
+    // 等待线程池结束
+    for (auto& thread : asio_threads_) {
+        if (thread.joinable()) {
+            thread.join();
+        }
+    }
+    asio_threads_.clear();
+    
+    if (io_context_) {
+        io_context_->reset();
+    }
+    
+    std::cout << "MAVLinkManager stopped with Boost.Asio event loop" << std::endl;
+#else
+    // 兼容模式：等待原有轮询线程结束
     if (connection_thread_.joinable()) {
         connection_thread_.join();
     }
@@ -84,6 +143,8 @@ void MAVLinkManager::stop() {
     if (reconnection_thread_.joinable()) {
         reconnection_thread_.join();
     }
+#endif
+    
     disconnectAll();
 }
 
@@ -1395,7 +1456,6 @@ void MAVLinkManager::runConnectionCycleOnce() {
 #ifdef HAVE_MAVSDK
     if (discovery_mode_) {
         runDiscoveryCycleOnce();
-        return;
     }
 #endif
     std::vector<DroneId> connecting_drones;
@@ -1445,6 +1505,21 @@ void MAVLinkManager::runConnectionCycleOnce() {
             }
         }
     }
+    
+    // 在Boost.Asio模式下，重新调度任务
+#ifdef USE_BOOST_ASIO
+    if (running_.load() && io_context_) {
+        boost::asio::post(*io_context_, [this]() {
+            // 使用定时器延迟执行，避免占用过多CPU
+            auto timer = std::make_shared<boost::asio::steady_timer>(*io_context_, RETRY_INTERVAL);
+            timer->async_wait([this, timer](const boost::system::error_code&) {
+                if (running_.load()) {
+                    runConnectionCycleOnce();
+                }
+            });
+        });
+    }
+#endif
 }
 
 #ifdef HAVE_MAVSDK
@@ -1544,138 +1619,187 @@ void MAVLinkManager::runTelemetryCycleOnce() {
         last_telemetry_callback_time_ = std::chrono::steady_clock::now();
     }
     auto cycle_start = std::chrono::high_resolution_clock::now();
-    std::vector<DroneId> connected_drones;
+    
+    // 收集需要处理的无人机连接
+    std::vector<std::pair<DroneId, DroneConnection*>> drones_to_process;
     {
         std::lock_guard<std::mutex> lock(connections_mutex_);
         for (const auto& [drone_id, conn] : connections_) {
             if (conn->status == ConnectionStatus::CONNECTED || conn->status == ConnectionStatus::AUTHENTICATED) {
-                connected_drones.push_back(drone_id);
+                drones_to_process.emplace_back(drone_id, conn.get());
             }
         }
     }
-    if (connected_drones.empty()) {
-        static int empty_count = 0;
-        if (empty_count % 100 == 0) {
-            std::cout << "📊 遥测线程：等待已认证的无人机..." << std::endl;
+    
+    // 异步处理遥测数据，避免阻塞事件循环
+    for (const auto& [drone_id, conn] : drones_to_process) {
+#ifdef USE_BOOST_ASIO
+        if (io_context_) {
+            boost::asio::post(*io_context_, [this, drone_id, conn]() {
+                processDroneTelemetry(drone_id, conn);
+            });
         }
-        empty_count++;
-        telemetry_cycle_count_++;
-        return;
+#else
+        // 非Boost.Asio模式：直接处理
+        processDroneTelemetry(drone_id, conn);
+#endif
     }
-    for (DroneId drone_id : connected_drones) {
-        ExtendedDroneState state_copy;
-        {
-            std::lock_guard<std::mutex> lock(connections_mutex_);
-            auto it = connections_.find(drone_id);
-            if (it == connections_.end()) continue;
-            auto now = std::chrono::system_clock::now();
-            it->second->state.last_update = now;
-            it->second->last_heartbeat = std::chrono::steady_clock::now();
-            it->second->state.drone_id = drone_id;
+    
+    telemetry_cycle_count_++;
+    total_telemetry_callbacks_processed_ += drones_to_process.size();
+    
+    // 每100次循环打印一次遥测处理状态
+    if (telemetry_cycle_count_ % 100 == 0) {
+        auto now = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_telemetry_status_report_).count();
+        std::cout << "[遥测] 处理完成，周期=" << telemetry_cycle_count_ 
+                  << ", 无人机数=" << drones_to_process.size() 
+                  << ", 总回调数=" << total_telemetry_callbacks_processed_ 
+                  << ", 耗时=" << elapsed << "ms" << std::endl;
+        last_telemetry_status_report_ = now;
+    }
+    
+    // 在Boost.Asio模式下，重新调度任务
+#ifdef USE_BOOST_ASIO
+    if (running_.load() && io_context_) {
+        boost::asio::post(*io_context_, [this]() {
+            // 使用定时器延迟执行，避免占用过多CPU
+            auto timer = std::make_shared<boost::asio::steady_timer>(*io_context_, std::chrono::milliseconds(100));
+            timer->async_wait([this, timer](const boost::system::error_code&) {
+                if (running_.load()) {
+                    runTelemetryCycleOnce();
+                }
+            });
+        });
+    }
+#endif
+}
+
+void MAVLinkManager::processDroneTelemetry(DroneId drone_id, DroneConnection* conn) {
+    auto now = std::chrono::system_clock::now();
+    conn->state.last_update = now;
+    conn->last_heartbeat = std::chrono::steady_clock::now();
+    conn->state.drone_id = drone_id;
+
+    bool position_updated = false;
+    double new_lat = conn->state.position.latitude;
+    double new_lon = conn->state.position.longitude;
+
 #ifdef HAVE_MAVSDK
-            if (it->second->telemetry) {
-                try {
-                    auto position = it->second->telemetry->position();
-                    it->second->state.position.latitude = position.latitude_deg;
-                    it->second->state.position.longitude = position.longitude_deg;
-                    it->second->state.position.altitude = position.relative_altitude_m;
+    if (conn->telemetry) {
+        try {
+            // 位置数据 - 过滤更新频率
+            if (telemetry_cycle_count_ % 5 == 0) {
+                auto position = conn->telemetry->position();
+                // 空间过滤：只有位置变化超过阈值才更新
+                if (std::abs(position.latitude_deg - conn->state.position.latitude) > 0.0001 ||
+                    std::abs(position.longitude_deg - conn->state.position.longitude) > 0.0001 ||
+                    std::abs(position.relative_altitude_m - conn->state.position.altitude) > 0.5) {
+                    new_lat = position.latitude_deg;
+                    new_lon = position.longitude_deg;
+                    conn->state.position.latitude = position.latitude_deg;
+                    conn->state.position.longitude = position.longitude_deg;
+                    conn->state.position.altitude = position.relative_altitude_m;
+                    position_updated = true;
                     if (telemetry_cycle_count_ % 50 == 0) {
                         std::cout << "📊 无人机" << drone_id << " 位置更新: 纬度=" << position.latitude_deg
                                   << ", 经度=" << position.longitude_deg
                                   << ", 相对高度=" << position.relative_altitude_m << "米" << std::endl;
                     }
-                    if (telemetry_cycle_count_ % 10 == 0) {
-                        auto velocity_ned = it->second->telemetry->velocity_ned();
-                        it->second->state.velocity_north = velocity_ned.north_m_s;
-                        it->second->state.velocity_east = velocity_ned.east_m_s;
-                        it->second->state.velocity_down = velocity_ned.down_m_s;
-                        it->second->state.speed = std::sqrt(
-                            velocity_ned.north_m_s * velocity_ned.north_m_s +
-                            velocity_ned.east_m_s * velocity_ned.east_m_s +
-                            velocity_ned.down_m_s * velocity_ned.down_m_s);
-                    }
-                    if (telemetry_cycle_count_ % 5 == 0) {
-                        auto battery = it->second->telemetry->battery();
-                        it->second->state.battery_percentage = battery.remaining_percent * 100.0;
-                    }
-                    if (telemetry_cycle_count_ % 10 == 0) {
-                        auto flight_mode = it->second->telemetry->flight_mode();
-                        switch (flight_mode) {
-                            case mavsdk::Telemetry::FlightMode::Ready:
-                                it->second->state.flight_status = FlightStatus::LANDED;
-                                break;
-                            case mavsdk::Telemetry::FlightMode::Takeoff:
-                                it->second->state.flight_status = FlightStatus::TAKING_OFF;
-                                break;
-                            case mavsdk::Telemetry::FlightMode::Hold:
-                            case mavsdk::Telemetry::FlightMode::Mission:
-                            case mavsdk::Telemetry::FlightMode::ReturnToLaunch:
-                            case mavsdk::Telemetry::FlightMode::Offboard:
-                            case mavsdk::Telemetry::FlightMode::Manual:
-                            case mavsdk::Telemetry::FlightMode::Altctl:
-                            case mavsdk::Telemetry::FlightMode::Posctl:
-                                it->second->state.flight_status = FlightStatus::IN_AIR;
-                                break;
-                            case mavsdk::Telemetry::FlightMode::Land:
-                                it->second->state.flight_status = FlightStatus::LANDING;
-                                break;
-                            default:
-                                it->second->state.flight_status = FlightStatus::UNKNOWN;
-                                break;
-                        }
-                    }
-                    if (telemetry_cycle_count_ % 3 == 0) {
-                        it->second->state.is_armed = it->second->telemetry->armed();
-                    }
-                    if (telemetry_cycle_count_ % 2 == 0) {
-                        auto velocity_ned = it->second->telemetry->velocity_ned();
-                        it->second->state.velocity_north = velocity_ned.north_m_s;
-                        it->second->state.velocity_east = velocity_ned.east_m_s;
-                        it->second->state.velocity_down = velocity_ned.down_m_s;
-                        it->second->state.ground_speed = std::sqrt(
-                            velocity_ned.north_m_s * velocity_ned.north_m_s +
-                            velocity_ned.east_m_s * velocity_ned.east_m_s);
-                    }
-                    if (telemetry_cycle_count_ % 5 == 0) {
-                        auto heading = it->second->telemetry->heading();
-                        it->second->state.heading_deg = heading.heading_deg;
-                    }
-                } catch (const std::exception&) {}
-            }
-#endif
-            state_copy = it->second->state;
-        }
-        if (state_manager_) {
-            state_manager_->updateDroneState(drone_id, state_copy);
-        }
-        auto now = std::chrono::steady_clock::now();
-        auto time_since_last_callback = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_telemetry_callback_time_).count();
-        if (!telemetry_callbacks_.empty() && time_since_last_callback >= 100) {
-            try {
-                for (auto& callback : telemetry_callbacks_) {
-                    callback(state_copy);
                 }
-                total_telemetry_callbacks_processed_++;
-                last_telemetry_callback_time_ = now;
-            } catch (const std::exception& e) {
-                std::cout << "[错误] 遥测回调异常: " << e.what() << std::endl;
             }
+            
+            // 速度数据 - 过滤更新频率
+            if (telemetry_cycle_count_ % 3 == 0) {
+                auto velocity_ned = conn->telemetry->velocity_ned();
+                // 速度过滤：只有速度变化超过阈值才更新
+                if (std::abs(velocity_ned.north_m_s - conn->state.velocity_north) > 0.1 ||
+                    std::abs(velocity_ned.east_m_s - conn->state.velocity_east) > 0.1 ||
+                    std::abs(velocity_ned.down_m_s - conn->state.velocity_down) > 0.1) {
+                    conn->state.velocity_north = velocity_ned.north_m_s;
+                    conn->state.velocity_east = velocity_ned.east_m_s;
+                    conn->state.velocity_down = velocity_ned.down_m_s;
+                    conn->state.speed = std::sqrt(
+                        velocity_ned.north_m_s * velocity_ned.north_m_s +
+                        velocity_ned.east_m_s * velocity_ned.east_m_s +
+                        velocity_ned.down_m_s * velocity_ned.down_m_s);
+                    conn->state.ground_speed = std::sqrt(
+                        velocity_ned.north_m_s * velocity_ned.north_m_s +
+                        velocity_ned.east_m_s * velocity_ned.east_m_s);
+                }
+            }
+            
+            // 电池数据 - 过滤更新频率
+            if (telemetry_cycle_count_ % 10 == 0) {
+                auto battery = conn->telemetry->battery();
+                // 电池过滤：只有电量变化超过阈值才更新
+                if (std::abs(battery.remaining_percent * 100.0 - conn->state.battery_percentage) > 1.0) {
+                    conn->state.battery_percentage = battery.remaining_percent * 100.0;
+                }
+            }
+            
+            // 飞行模式 - 过滤更新频率
+            if (telemetry_cycle_count_ % 5 == 0) {
+                auto flight_mode = conn->telemetry->flight_mode();
+                FlightStatus new_status = FlightStatus::UNKNOWN;
+                switch (flight_mode) {
+                    case mavsdk::Telemetry::FlightMode::Ready:
+                        new_status = FlightStatus::LANDED;
+                        break;
+                    case mavsdk::Telemetry::FlightMode::Takeoff:
+                        new_status = FlightStatus::TAKING_OFF;
+                        break;
+                    case mavsdk::Telemetry::FlightMode::Hold:
+                    case mavsdk::Telemetry::FlightMode::Mission:
+                    case mavsdk::Telemetry::FlightMode::ReturnToLaunch:
+                    case mavsdk::Telemetry::FlightMode::Offboard:
+                    case mavsdk::Telemetry::FlightMode::Manual:
+                    case mavsdk::Telemetry::FlightMode::Altctl:
+                    case mavsdk::Telemetry::FlightMode::Posctl:
+                        new_status = FlightStatus::IN_AIR;
+                        break;
+                    case mavsdk::Telemetry::FlightMode::Land:
+                        new_status = FlightStatus::LANDING;
+                        break;
+                    default:
+                        new_status = FlightStatus::UNKNOWN;
+                        break;
+                }
+                // 飞行状态过滤：只有状态变化才更新
+                if (new_status != conn->state.flight_status) {
+                    conn->state.flight_status = new_status;
+                }
+            }
+            
+            // 武装状态 - 过滤更新频率
+            if (telemetry_cycle_count_ % 2 == 0) {
+                bool is_armed = conn->telemetry->armed();
+                // 武装状态过滤：只有状态变化才更新
+                if (is_armed != conn->state.is_armed) {
+                    conn->state.is_armed = is_armed;
+                }
+            }
+        } catch (const std::exception& e) {
+            std::cerr << "[遥测] 处理无人机 " << drone_id << " 遥测数据时异常: " << e.what() << std::endl;
         }
     }
-    telemetry_cycle_count_++;
-    auto cycle_duration = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::high_resolution_clock::now() - cycle_start).count();
-    if (telemetry_cycle_count_ % 50 == 0) {
-        last_telemetry_status_report_ = std::chrono::steady_clock::now();
-        std::cout << "📈 遥测性能报告 - 周期: " << telemetry_cycle_count_
-                  << ", 周期耗时: " << (cycle_duration / 1000.0) << "ms"
-                  << ", 已处理回调: " << total_telemetry_callbacks_processed_
-                  << ", 连接无人机数: " << connected_drones.size() << std::endl;
+#endif
+    
+    // 更新无人机位置，用于动态连接管理
+    if (position_updated) {
+        updateDronePosition(drone_id, new_lat, new_lon);
     }
-    if (cycle_duration > TELEMETRY_INTERVAL.count() * 1000) {
-        std::cout << "[警告]  遥测周期耗时过长: " << (cycle_duration / 1000.0) << "ms" << std::endl;
+    
+    // 通知状态管理器和回调
+    if (state_manager_) {
+        state_manager_->updateDroneState(drone_id, conn->state);
+    }
+    for (auto& callback : telemetry_callbacks_) {
+        callback(conn->state);
     }
 }
+
+
 
 void MAVLinkManager::telemetryWorker() {
     std::cout << "🔄 遥测数据工作线程已启动，更新间隔: " << TELEMETRY_INTERVAL.count() << "ms" << std::endl;
@@ -1704,6 +1828,21 @@ void MAVLinkManager::runHeartbeatCycleOnce() {
     for (DroneId drone_id : lost_drones) {
         handleConnectionLost(drone_id);
     }
+    
+    // 在Boost.Asio模式下，重新调度任务
+#ifdef USE_BOOST_ASIO
+    if (running_.load() && io_context_) {
+        boost::asio::post(*io_context_, [this]() {
+            // 使用定时器延迟执行，避免占用过多CPU
+            auto timer = std::make_shared<boost::asio::steady_timer>(*io_context_, std::chrono::seconds(5));
+            timer->async_wait([this, timer](const boost::system::error_code&) {
+                if (running_.load()) {
+                    runHeartbeatCycleOnce();
+                }
+            });
+        });
+    }
+#endif
 }
 
 void MAVLinkManager::heartbeatChecker() {
@@ -1766,6 +1905,21 @@ void MAVLinkManager::runAuthenticationCycleOnce() {
             }
         }
     }
+    
+    // 在Boost.Asio模式下，重新调度任务
+#ifdef USE_BOOST_ASIO
+    if (running_.load() && io_context_) {
+        boost::asio::post(*io_context_, [this]() {
+            // 使用定时器延迟执行，避免占用过多CPU
+            auto timer = std::make_shared<boost::asio::steady_timer>(*io_context_, std::chrono::seconds(1));
+            timer->async_wait([this, timer](const boost::system::error_code&) {
+                if (running_.load()) {
+                    runAuthenticationCycleOnce();
+                }
+            });
+        });
+    }
+#endif
 }
 
 void MAVLinkManager::authenticationWorker() {
@@ -1801,11 +1955,32 @@ void MAVLinkManager::runReconnectionCycleOnce() {
                     state_manager_->updateDroneState(drone_id, it->second->state);
                 }
                 std::cout << "无人机 " << drone_id << " 重连成功" << std::endl;
+                
+                // 重连成功后，重新分配边缘设备
+                std::string best_edge_device = getBestEdgeDeviceForDrone(drone_id);
+                if (!best_edge_device.empty()) {
+                    assignDroneToEdgeDevice(drone_id, best_edge_device);
+                }
             } else {
                 std::cout << "[错误] 无人机 " << drone_id << " 重连失败，将在 " << RECONNECT_INTERVAL.count() << " 秒后重试" << std::endl;
             }
         }
     }
+    
+    // 在Boost.Asio模式下，重新调度任务
+#ifdef USE_BOOST_ASIO
+    if (running_.load() && io_context_) {
+        boost::asio::post(*io_context_, [this]() {
+            // 使用定时器延迟执行，避免占用过多CPU
+            auto timer = std::make_shared<boost::asio::steady_timer>(*io_context_, RECONNECT_INTERVAL);
+            timer->async_wait([this, timer](const boost::system::error_code&) {
+                if (running_.load()) {
+                    runReconnectionCycleOnce();
+                }
+            });
+        });
+    }
+#endif
 }
 
 void MAVLinkManager::reconnectionWorker() {
@@ -2161,6 +2336,69 @@ void MAVLinkManager::setupMavlinkMessageHandlers(DroneConnection& conn) {
         return;
     }
     
+#ifdef USE_BOOST_ASIO
+    // 使用Boost.Asio的异步机制处理消息
+    // 设置消息接收回调 - 使用标准STATUSTEXT消息
+    conn.mavlink_passthrough->subscribe_message(
+        MAVLINK_MSG_ID_STATUSTEXT,
+        [this, drone_id = conn.drone_id](const mavlink_message_t& message) {
+            // 将消息处理任务发布到Boost.Asio事件循环
+            if (io_context_) {
+                boost::asio::post(*io_context_, [this, drone_id, message]() {
+                    handleMavlinkMessage(drone_id, message);
+                });
+            } else {
+                // 兼容模式：直接处理
+                handleMavlinkMessage(drone_id, message);
+            }
+        }
+    );
+    
+    // 尝试设置一个通用的消息监听器来捕获所有消息
+    // 使用心跳消息作为测试，然后检查是否有其他消息
+    // 取消高频心跳的控制台输出，避免刷屏
+    conn.mavlink_passthrough->subscribe_message(
+        MAVLINK_MSG_ID_HEARTBEAT,
+        [this, drone_id = conn.drone_id](const mavlink_message_t& message) {
+            (void)drone_id; (void)message;
+        }
+    );
+    
+    conn.mavlink_passthrough->subscribe_message(
+        200,
+        [this, drone_id = conn.drone_id](const mavlink_message_t& message) {
+            // 将消息处理任务发布到Boost.Asio事件循环
+            if (io_context_) {
+                boost::asio::post(*io_context_, [this, drone_id, message]() {
+                    handleMavlinkMessage(drone_id, message);
+                });
+            } else {
+                // 兼容模式：直接处理
+                handleMavlinkMessage(drone_id, message);
+            }
+        }
+    );
+    
+    // 注册自定义消息ID 12921 (MISSION_PURPOSE_UPLOAD)
+    conn.mavlink_passthrough->subscribe_message(
+        12921,
+        [this, drone_id = conn.drone_id](const mavlink_message_t& message) {
+            std::cout << "[MAVLink] 收到消息ID 12921 (MISSION_PURPOSE_UPLOAD)" << std::endl;
+            // 将消息处理任务发布到Boost.Asio事件循环
+            if (io_context_) {
+                boost::asio::post(*io_context_, [this, drone_id, message]() {
+                    handleMavlinkMessage(drone_id, message);
+                });
+            } else {
+                // 兼容模式：直接处理
+                handleMavlinkMessage(drone_id, message);
+            }
+        }
+    );
+    
+    std::cout << "[MAVLink] 已在无人机 " << conn.drone_id << " 上注册消息回调（Boost.Asio异步处理）" << std::endl;
+#else
+    // 兼容模式：使用原有回调机制
     // 设置消息接收回调 - 使用标准STATUSTEXT消息
     conn.mavlink_passthrough->subscribe_message(
         MAVLINK_MSG_ID_STATUSTEXT,
@@ -2196,6 +2434,7 @@ void MAVLinkManager::setupMavlinkMessageHandlers(DroneConnection& conn) {
     );
     
     std::cout << "[MAVLink] 已在无人机 " << conn.drone_id << " 上注册消息回调" << std::endl;
+#endif
 #else
     std::cout << "[MAVLink] MAVSDK 不可用，无法注册消息回调" << std::endl;
 #endif
@@ -2738,5 +2977,94 @@ void MAVLinkManager::handleCertificateFileDownloaded(DroneId drone_id, const std
     performAccessControlEvaluation(drone_id);
 }
 
+// 边缘设备管理方法
+void MAVLinkManager::registerEdgeDevice(const std::string& device_id, const std::string& device_name, const std::string& location) {
+    std::lock_guard<std::mutex> lock(edge_devices_mutex_);
+    EdgeDeviceInfo device_info;
+    device_info.device_id = device_id;
+    device_info.device_name = device_name;
+    device_info.location = location;
+    device_info.online = true;
+    device_info.last_heartbeat = std::chrono::system_clock::now();
+    edge_devices_[device_id] = device_info;
+    std::cout << "边缘设备注册成功: " << device_name << " (" << device_id << ")" << std::endl;
+}
+
+void MAVLinkManager::unregisterEdgeDevice(const std::string& device_id) {
+    std::lock_guard<std::mutex> lock(edge_devices_mutex_);
+    auto it = edge_devices_.find(device_id);
+    if (it != edge_devices_.end()) {
+        std::cout << "边缘设备注销: " << it->second.device_name << " (" << it->second.device_id << ")" << std::endl;
+        edge_devices_.erase(it);
+    }
+}
+
+void MAVLinkManager::updateEdgeDeviceStatus(const std::string& device_id, bool online) {
+    std::lock_guard<std::mutex> lock(edge_devices_mutex_);
+    auto it = edge_devices_.find(device_id);
+    if (it != edge_devices_.end()) {
+        it->second.online = online;
+        it->second.last_heartbeat = std::chrono::system_clock::now();
+        std::cout << "边缘设备状态更新: " << it->second.device_name << " (" << it->second.device_id << ") 在线状态: " << (online ? "在线" : "离线") << std::endl;
+        
+        // 如果边缘设备离线，将其管理的无人机重新分配到其他在线边缘设备
+        if (!online) {
+            auto drone_it = edge_device_to_drones_.find(device_id);
+            if (drone_it != edge_device_to_drones_.end()) {
+                for (DroneId drone_id : drone_it->second) {
+                    std::string best_edge_device = getBestEdgeDeviceForDrone(drone_id);
+                    if (!best_edge_device.empty()) {
+                        switchDroneEdgeDevice(drone_id, best_edge_device);
+                    }
+                }
+            }
+        }
+    }
+}
+
+// 边缘设备辅助方法
+void MAVLinkManager::updateDronePosition(DroneId drone_id, double lat, double lon) {
+    // 这里可以实现无人机位置更新逻辑
+    // 例如，可以将位置信息存储到状态中
+    std::lock_guard<std::mutex> lock(connections_mutex_);
+    auto it = connections_.find(drone_id);
+    if (it != connections_.end()) {
+        it->second->state.position.latitude = lat;
+        it->second->state.position.longitude = lon;
+    }
+}
+
+std::string MAVLinkManager::getBestEdgeDeviceForDrone(DroneId drone_id) {
+    std::lock_guard<std::mutex> lock(edge_devices_mutex_);
+    
+    // 简单实现：返回第一个在线的边缘设备
+    for (const auto& [device_id, device_info] : edge_devices_) {
+        if (device_info.online) {
+            return device_id;
+        }
+    }
+    return "";
+}
+
+void MAVLinkManager::assignDroneToEdgeDevice(DroneId drone_id, const std::string& edge_device_id) {
+    std::lock_guard<std::mutex> lock(edge_devices_mutex_);
+    
+    // 先从旧的边缘设备中移除
+    auto old_it = drone_to_edge_device_.find(drone_id);
+    if (old_it != drone_to_edge_device_.end()) {
+        auto& old_drones = edge_device_to_drones_[old_it->second];
+        old_drones.erase(std::remove(old_drones.begin(), old_drones.end(), drone_id), old_drones.end());
+    }
+    
+    // 分配到新的边缘设备
+    drone_to_edge_device_[drone_id] = edge_device_id;
+    edge_device_to_drones_[edge_device_id].push_back(drone_id);
+    
+    std::cout << "无人机 " << drone_id << " 分配到边缘设备 " << edge_device_id << std::endl;
+}
+
+void MAVLinkManager::switchDroneEdgeDevice(DroneId drone_id, const std::string& new_edge_device_id) {
+    assignDroneToEdgeDevice(drone_id, new_edge_device_id);
+}
 
 } // namespace drone_control

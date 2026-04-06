@@ -11,6 +11,16 @@
 #include <stdexcept>
 #include <memory>
 
+#ifdef HAVE_TBB
+#include <tbb/parallel_for.h>
+#include <tbb/blocked_range.h>
+#include <tbb/concurrent_vector.h>
+#endif
+
+#ifdef USE_OPENMP
+#include <omp.h>
+#endif
+
 namespace drone_control {
 namespace access_control {
 
@@ -306,9 +316,53 @@ ABACPolicyEngine::PolicyEvaluationResult ABACPolicyEngine::resolveConflicts(
 
 std::vector<ABACPolicyEngine::PolicyRule> ABACPolicyEngine::findApplicablePolicies(const AccessRequest& request) const {
     std::lock_guard<std::mutex> lock(policies_mutex_);
+    std::map<std::string, std::string> context = buildEvaluationContext(request);
+    
+#ifdef HAVE_TBB
+    // 使用 TBB 并行处理
+    tbb::concurrent_vector<PolicyRule> concurrent_applicable;
+    
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, policies_.size()),
+        [&](const tbb::blocked_range<size_t>& r) {
+            for (size_t i = r.begin(); i != r.end(); ++i) {
+                const auto& policy = policies_[i];
+                if (policy.is_active && isPolicyApplicable(policy, context)) {
+                    concurrent_applicable.push_back(policy);
+                }
+            }
+        });
+    
+    // 转换为 std::vector
+    std::vector<PolicyRule> applicable(concurrent_applicable.begin(), concurrent_applicable.end());
+    return applicable;
+
+#elif USE_OPENMP
+    // 使用 OpenMP 并行处理
     std::vector<PolicyRule> applicable;
     
-    std::map<std::string, std::string> context = buildEvaluationContext(request);
+    #pragma omp parallel
+    {
+        std::vector<PolicyRule> private_applicable;
+        
+        #pragma omp for schedule(static)
+        for (size_t i = 0; i < policies_.size(); ++i) {
+            const auto& policy = policies_[i];
+            if (policy.is_active && isPolicyApplicable(policy, context)) {
+                private_applicable.push_back(policy);
+            }
+        }
+        
+        #pragma omp critical(applicable_insert)
+        {
+            applicable.insert(applicable.end(), private_applicable.begin(), private_applicable.end());
+        }
+    }
+    
+    return applicable;
+
+#else
+    // 串行处理（回退）
+    std::vector<PolicyRule> applicable;
     
     for (const auto& policy : policies_) {
         if (policy.is_active && isPolicyApplicable(policy, context)) {
@@ -316,6 +370,7 @@ std::vector<ABACPolicyEngine::PolicyRule> ABACPolicyEngine::findApplicablePolici
         }
     }
     return applicable;
+#endif
 }
 
 bool ABACPolicyEngine::isPolicyApplicable(const PolicyRule& rule, 

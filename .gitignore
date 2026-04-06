@@ -1,52 +1,38 @@
-# Build
+# 测试目录
+test/
+
+# 编译产物
 build/
-
-# Tools (not for repo)
-tools/
-
-# Web (not for repo)
-web/
-
-# Docs (not for repo)，保留功能演示图供 README 引用
-docs/*
-!docs/images/
-!docs/images/*
-
-# Experiments (not for repo)
-src/experiments/
-
-# JSON (tokens, keys, signed data - not for repo)
-*.json
-cmake-build-*/
 *.o
-*.a
 *.so
+*.a
+*.bin
 *.exe
-*.sh
-*.py
-# IDE
-.idea/
+
+# 依赖
+third_party/
+hiredis-1.0.2/
+
+# 日志
+*.log
+
+# IDE文件
 .vscode/
+.idea/
 *.swp
 *.swo
-*~
 
-# Config / secrets (optional: remove if you want to track sample configs)
-config/keys/*.pem
-*.pem
-!config/test_certificates/
+# 环境变量
+.env
 
-# Logs and temp
-*.log
+# 临时文件
 *.tmp
-.DS_Store
+*.temp
 
-# Python
-__pycache__/
-*.py[cod]
-.venv/
-venv/
+# 数据库文件
+*.db
+*.sqlite
 
-# Miracl / third_party build artifacts
-third_party/miracl-core/cpp/*.o
-third_party/miracl-core/cpp/core.a
+# 文档生成
+*.pdf
+*.html

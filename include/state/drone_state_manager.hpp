@@ -6,6 +6,8 @@
  */
 #include "common/types.hpp"
 #include "common/drone_attributes.hpp"
+#include "database/database_manager.hpp"
+#include "resources/airspace_resource_manager.hpp"
 #include <memory>
 #include <map>
 #include <vector>
@@ -66,6 +68,16 @@ public:
     void removeOfflineDrones();
     void clearAllStates();
 
+public:
+    // 依赖注入
+    void setAirspaceResourceManager(std::shared_ptr<resources::AirspaceResourceManager> airspace_manager) {
+        airspace_manager_ = airspace_manager;
+    }
+    
+    void setDatabaseManager(std::shared_ptr<DatabaseManager> database_manager) {
+        database_manager_ = database_manager;
+    }
+
 private:
     struct DroneStateInfo {
         ExtendedDroneState state;
@@ -88,6 +100,10 @@ private:
     std::vector<DroneOfflineCallback> drone_offline_callbacks_;
     
     std::chrono::seconds timeout_duration_;
+    
+    // 依赖
+    std::shared_ptr<resources::AirspaceResourceManager> airspace_manager_;
+    std::shared_ptr<DatabaseManager> database_manager_;
     
     // 统计缓存（可选优化）
     mutable std::mutex stats_mutex_;

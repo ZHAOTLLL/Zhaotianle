@@ -14,6 +14,19 @@ find_package(nlohmann_json QUIET)
 find_package(Boost 1.70 QUIET COMPONENTS system)
 find_package(TBB QUIET)
 find_package(OpenMP QUIET)
+
+# TBB 和 OpenMP 配置
+if(TBB_FOUND)
+    message(STATUS "TBB: ${TBB_VERSION}")
+    add_compile_definitions(HAVE_TBB)
+    link_libraries(TBB::tbb)
+endif()
+
+if(OpenMP_FOUND)
+    message(STATUS "OpenMP: ${OpenMP_VERSION}")
+    add_compile_definitions(USE_OPENMP)
+    link_libraries(OpenMP::OpenMP_CXX)
+endif()
 if(PkgConfig_FOUND)
     pkg_check_modules(ZMQ QUIET libzmq)
 endif()
@@ -54,6 +67,7 @@ set(CORE_BACKEND_SOURCES
     src/flight_control/flight_plan.cpp
     src/error/error_recovery_manager.cpp
     src/error/security_violation_handler.cpp
+    src/database/database_manager.cpp
 )
 
 # 为需要 Miracl+GMP+OpenSSL+JSON 的目标统一链接
@@ -102,8 +116,19 @@ add_executable(${PROJECT_NAME}
     src/flight_control/flight_plan.cpp
     src/error/error_recovery_manager.cpp
     src/error/security_violation_handler.cpp
+    src/database/database_manager.cpp
 )
-target_link_libraries(${PROJECT_NAME} pthread yaml-cpp)
+# 配置 hiredis 库
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(HIREDIS hiredis)
+if(NOT HIREDIS_FOUND)
+    # 如果系统中没有安装 hiredis，使用本地编译的版本
+    set(HIREDIS_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/hiredis-1.0.2)
+    set(HIREDIS_LIBRARY ${CMAKE_SOURCE_DIR}/hiredis-1.0.2/libhiredis.a)
+endif()
+
+target_include_directories(${PROJECT_NAME} PRIVATE ${HIREDIS_INCLUDE_DIR})
+target_link_libraries(${PROJECT_NAME} pthread yaml-cpp ${HIREDIS_LIBRARY})
 if(EXISTS ${MIRACL_CORE_LIB})
     target_link_libraries(${PROJECT_NAME} ${MIRACL_CORE_LIB})
 endif()
@@ -170,12 +195,13 @@ if(DRONE_GRPC_USE_CONFIG)
         ${CORE_BACKEND_SOURCES}
     )
     add_dependencies(drone_grpc_server proto_gen)
-    target_include_directories(drone_grpc_server PRIVATE "${PROTO_GEN_DIR}" ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/src ${MIRACL_CORE_DIR})
+    target_include_directories(drone_grpc_server PRIVATE "${PROTO_GEN_DIR}" ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/src ${MIRACL_CORE_DIR} ${HIREDIS_INCLUDE_DIR})
     target_compile_definitions(drone_grpc_server PRIVATE HAVE_GRPC HAVE_NLOHMANN_JSON)
     target_link_libraries(drone_grpc_server
         gRPC::grpc++ gRPC::grpc++_reflection protobuf::libprotobuf
         pthread yaml-cpp ${MIRACL_CORE_LIB} ${GMP_LIB}
         OpenSSL::SSL OpenSSL::Crypto nlohmann_json::nlohmann_json
+        ${HIREDIS_LIBRARY}
     )
     if(Boost_FOUND)
         target_link_libraries(drone_grpc_server Boost::system)
@@ -209,12 +235,13 @@ elseif(DRONE_GRPC_USE_PKGCONFIG)
         ${CORE_BACKEND_SOURCES}
     )
     add_dependencies(drone_grpc_server proto_gen_pc)
-    target_include_directories(drone_grpc_server PRIVATE "${PROTO_GEN_DIR}" ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/src ${MIRACL_CORE_DIR} ${GRPC_INCLUDE_DIRS} ${Protobuf_INCLUDE_DIRS})
+    target_include_directories(drone_grpc_server PRIVATE "${PROTO_GEN_DIR}" ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/src ${MIRACL_CORE_DIR} ${GRPC_INCLUDE_DIRS} ${Protobuf_INCLUDE_DIRS} ${HIREDIS_INCLUDE_DIR})
     target_compile_definitions(drone_grpc_server PRIVATE HAVE_GRPC HAVE_NLOHMANN_JSON)
     target_link_libraries(drone_grpc_server
         ${GRPC_LIBRARIES} ${Protobuf_LIBRARIES}
         pthread yaml-cpp ${MIRACL_CORE_LIB} ${GMP_LIB}
         OpenSSL::SSL OpenSSL::Crypto nlohmann_json::nlohmann_json
+        ${HIREDIS_LIBRARY}
     )
     if(Boost_FOUND)
         target_link_libraries(drone_grpc_server Boost::system)
@@ -257,7 +284,8 @@ target_link_libraries(test_geofence_sanitizer pthread)
 link_miracl_target(test_geofence_sanitizer)
 
 add_executable(test_fcsacm_complete_flow tools/test_fcsacm_complete_flow.cpp ${CORE_BACKEND_SOURCES})
-target_link_libraries(test_fcsacm_complete_flow pthread yaml-cpp)
+target_include_directories(test_fcsacm_complete_flow PRIVATE ${HIREDIS_INCLUDE_DIR})
+target_link_libraries(test_fcsacm_complete_flow pthread yaml-cpp ${HIREDIS_LIBRARY})
 if(MAVSDK_FOUND)
     target_link_libraries(test_fcsacm_complete_flow MAVSDK::mavsdk)
     target_compile_definitions(test_fcsacm_complete_flow PRIVATE HAVE_MAVSDK)
@@ -271,8 +299,10 @@ add_executable(test_fcsacm_star_complete_flow tools/test_fcsacm_star_complete_fl
     src/signature/geofence_signature_service.cpp src/signature/dss_ms_signature.cpp src/signature/mission_signature_verifier.cpp
     src/resources/airspace_resource_manager.cpp src/communication/mavlink_manager.cpp src/flight_control/flight_control_module.cpp src/flight_control/flight_plan.cpp
     src/state/drone_state_manager.cpp src/error/error_recovery_manager.cpp src/error/security_violation_handler.cpp
+    src/database/database_manager.cpp
 )
-target_link_libraries(test_fcsacm_star_complete_flow pthread yaml-cpp)
+target_include_directories(test_fcsacm_star_complete_flow PRIVATE ${HIREDIS_INCLUDE_DIR})
+target_link_libraries(test_fcsacm_star_complete_flow pthread yaml-cpp ${HIREDIS_LIBRARY})
 if(MAVSDK_FOUND)
     target_link_libraries(test_fcsacm_star_complete_flow MAVSDK::mavsdk)
     target_compile_definitions(test_fcsacm_star_complete_flow PRIVATE HAVE_MAVSDK)
@@ -323,23 +353,26 @@ if(DRONE_GRPC_USE_CONFIG OR DRONE_GRPC_USE_PKGCONFIG)
         src/flight_control/flight_plan.cpp
         src/error/error_recovery_manager.cpp
         src/error/security_violation_handler.cpp
+        src/database/database_manager.cpp
         "${PROTO_PB_CC}" "${PROTO_GRPC_CC}"
     )
     if(DRONE_GRPC_USE_CONFIG)
         add_dependencies(edge_device_app proto_gen)
-        target_include_directories(edge_device_app PRIVATE "${PROTO_GEN_DIR}" ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/src ${MIRACL_CORE_DIR})
+        target_include_directories(edge_device_app PRIVATE "${PROTO_GEN_DIR}" ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/src ${MIRACL_CORE_DIR} ${HIREDIS_INCLUDE_DIR})
         target_link_libraries(edge_device_app
             gRPC::grpc++ gRPC::grpc++_reflection protobuf::libprotobuf
             pthread yaml-cpp ${MIRACL_CORE_LIB} ${GMP_LIB}
             OpenSSL::SSL OpenSSL::Crypto nlohmann_json::nlohmann_json
+            ${HIREDIS_LIBRARY}
         )
     else()
         add_dependencies(edge_device_app proto_gen_pc)
-        target_include_directories(edge_device_app PRIVATE "${PROTO_GEN_DIR}" ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/src ${MIRACL_CORE_DIR} ${GRPC_INCLUDE_DIRS} ${Protobuf_INCLUDE_DIRS})
+        target_include_directories(edge_device_app PRIVATE "${PROTO_GEN_DIR}" ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/src ${MIRACL_CORE_DIR} ${GRPC_INCLUDE_DIRS} ${Protobuf_INCLUDE_DIRS} ${HIREDIS_INCLUDE_DIR})
         target_link_libraries(edge_device_app
             ${GRPC_LIBRARIES} ${Protobuf_LIBRARIES}
             pthread yaml-cpp ${MIRACL_CORE_LIB} ${GMP_LIB}
             OpenSSL::SSL OpenSSL::Crypto nlohmann_json::nlohmann_json
+            ${HIREDIS_LIBRARY}
         )
     endif()
     target_compile_definitions(edge_device_app PRIVATE HAVE_GRPC HAVE_NLOHMANN_JSON)
@@ -361,6 +394,15 @@ endif()
 # 数据库服务程序
 # ------------------------------------------------------------------------------
 if(DRONE_GRPC_USE_CONFIG OR DRONE_GRPC_USE_PKGCONFIG)
+    # 配置 hiredis 库
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(HIREDIS hiredis)
+    if(NOT HIREDIS_FOUND)
+        # 如果系统中没有安装 hiredis，使用本地编译的版本
+        set(HIREDIS_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/hiredis-1.0.2)
+        set(HIREDIS_LIBRARY ${CMAKE_SOURCE_DIR}/hiredis-1.0.2/libhiredis.a)
+    endif()
+    
     add_executable(database_service_app
         src/database/database_service_main.cpp
         src/database/database_manager.cpp
@@ -368,19 +410,21 @@ if(DRONE_GRPC_USE_CONFIG OR DRONE_GRPC_USE_PKGCONFIG)
     )
     if(DRONE_GRPC_USE_CONFIG)
         add_dependencies(database_service_app proto_gen)
-        target_include_directories(database_service_app PRIVATE "${PROTO_GEN_DIR}" ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/src ${MIRACL_CORE_DIR})
+        target_include_directories(database_service_app PRIVATE "${PROTO_GEN_DIR}" ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/src ${MIRACL_CORE_DIR} ${HIREDIS_INCLUDE_DIR})
         target_link_libraries(database_service_app
             gRPC::grpc++ gRPC::grpc++_reflection protobuf::libprotobuf
             pthread yaml-cpp ${MIRACL_CORE_LIB} ${GMP_LIB}
             OpenSSL::SSL OpenSSL::Crypto nlohmann_json::nlohmann_json
+            ${HIREDIS_LIBRARY}
         )
     else()
         add_dependencies(database_service_app proto_gen_pc)
-        target_include_directories(database_service_app PRIVATE "${PROTO_GEN_DIR}" ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/src ${MIRACL_CORE_DIR} ${GRPC_INCLUDE_DIRS} ${Protobuf_INCLUDE_DIRS})
+        target_include_directories(database_service_app PRIVATE "${PROTO_GEN_DIR}" ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/src ${MIRACL_CORE_DIR} ${GRPC_INCLUDE_DIRS} ${Protobuf_INCLUDE_DIRS} ${HIREDIS_INCLUDE_DIR})
         target_link_libraries(database_service_app
             ${GRPC_LIBRARIES} ${Protobuf_LIBRARIES}
             pthread yaml-cpp ${MIRACL_CORE_LIB} ${GMP_LIB}
             OpenSSL::SSL OpenSSL::Crypto nlohmann_json::nlohmann_json
+            ${HIREDIS_LIBRARY}
         )
     endif()
     target_compile_definitions(database_service_app PRIVATE HAVE_GRPC HAVE_NLOHMANN_JSON)

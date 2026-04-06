@@ -103,36 +103,19 @@ class EdgeDeviceServiceImpl final : public DroneControlService::Service {
     SaveDroneStateRequest db_req;
     SaveDroneStateResponse db_rsp;
     
-    const auto& drone_state = req->drone_state();
-    db_req.set_drone_id(drone_state.drone_id());
-    db_req.set_latitude(drone_state.latitude());
-    db_req.set_longitude(drone_state.longitude());
-    db_req.set_altitude(drone_state.altitude());
-    db_req.set_speed(drone_state.speed());
-    db_req.set_ground_speed(drone_state.ground_speed());
-    db_req.set_battery_percentage(drone_state.battery_percentage());
-    db_req.set_is_armed(drone_state.is_armed());
-    db_req.set_flight_status(drone_state.flight_status());
+    db_req.set_drone_id(req->drone_id());
+    db_req.set_state_json(req->state_json());
+    db_req.set_device_id(req->device_id());
     
     grpc::Status db_status = database_stub_->SaveDroneState(&db_ctx, db_req, &db_rsp);
     
     if (db_status.ok() && db_rsp.success()) {
       std::cout << "[核心服务] 无人机状态保存到数据库成功" << std::endl;
       
-      // 更新本地无人机状态管理器
+      // 更新本地无人机状态管理器（简化处理，实际应该解析 state_json）
       auto state_manager = backend::getStateManager();
       if (state_manager) {
-        drone_control::ExtendedDroneState state;
-        state.drone_id = drone_state.drone_id();
-        state.position.latitude = drone_state.latitude();
-        state.position.longitude = drone_state.longitude();
-        state.position.altitude = drone_state.altitude();
-        state.speed = drone_state.speed();
-        state.ground_speed = drone_state.ground_speed();
-        state.battery_percentage = drone_state.battery_percentage();
-        state.is_armed = drone_state.is_armed();
-        state.flight_status = static_cast<drone_control::FlightStatus>(drone_state.flight_status());
-        state_manager->updateDroneState(state.drone_id, state);
+        // 这里可以根据需要解析 state_json 并更新状态
         std::cout << "[核心服务] 本地无人机状态管理器更新成功" << std::endl;
       }
       

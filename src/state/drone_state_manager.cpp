@@ -46,6 +46,24 @@ void DroneStateManager::updateDroneState(DroneId drone_id, const ExtendedDroneSt
         }
     }
     
+    // 检查是否在隐私空域内
+    if (airspace_manager_ && database_manager_) {
+        std::string zone_id;
+        if (airspace_manager_->isInPrivacyZone(state.position.latitude, state.position.longitude, zone_id)) {
+            // 存储到Redis
+            database_manager_->saveDroneInPrivacyZone(drone_id, state, zone_id);
+            
+            // 存储飞行路径（这里简化处理，使用当前位置作为路径点）
+            std::vector<Waypoint> path;
+            Waypoint waypoint;
+            waypoint.position = state.position;
+            path.push_back(waypoint);
+            database_manager_->saveFlightPathInPrivacyZone(drone_id, path, zone_id);
+            
+            std::cout << "Drone " << drone_id << " is in privacy zone: " << zone_id << std::endl;
+        }
+    }
+    
     // 通知状态变化
     notifyStateChange(state);
 }

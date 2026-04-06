@@ -17,6 +17,87 @@ service DroneControlCore {
   rpc ConfirmMission(ConfirmMissionRequest) returns (JsonResponse);
 }
 
+// 边缘设备服务：处理边缘设备的注册、心跳、状态同步和权限评估
+service DroneControlService {
+  rpc RegisterEdgeDevice(RegisterEdgeDeviceRequest) returns (RegisterEdgeDeviceResponse);
+  rpc SyncDroneState(SyncDroneStateRequest) returns (SyncDroneStateResponse);
+  rpc EvaluateEdgeAccess(EvaluateEdgeAccessRequest) returns (EvaluateEdgeAccessResponse);
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+}
+
+// 数据库服务：处理边缘设备信息和无人机状态的存储
+service DatabaseService {
+  rpc SaveEdgeDeviceInfo(SaveEdgeDeviceInfoRequest) returns (SaveEdgeDeviceInfoResponse);
+  rpc SaveDroneState(SaveDroneStateRequest) returns (SaveDroneStateResponse);
+}
+
+message RegisterEdgeDeviceRequest {
+  string device_id = 1;
+  string device_name = 2;
+  string location = 3;
+}
+
+message RegisterEdgeDeviceResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message SyncDroneStateRequest {
+  string device_id = 1;
+  int32 drone_id = 2;
+  string state_json = 3;
+}
+
+message SyncDroneStateResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message EvaluateEdgeAccessRequest {
+  string device_id = 1;
+  int32 drone_id = 2;
+  string request_json = 3;
+  string geofence_token = 4;
+  string edge_device_id = 5;
+}
+
+message EvaluateEdgeAccessResponse {
+  bool access_granted = 1;
+  string reason = 2;
+}
+
+message HeartbeatRequest {
+  string device_id = 1;
+}
+
+message HeartbeatResponse {
+  string timestamp = 1;
+  bool success = 2;
+}
+
+message SaveEdgeDeviceInfoRequest {
+  string device_id = 1;
+  string device_name = 2;
+  string location = 3;
+  bool online = 4;
+}
+
+message SaveEdgeDeviceInfoResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message SaveDroneStateRequest {
+  int32 drone_id = 1;
+  string state_json = 2;
+  string device_id = 3;
+}
+
+message SaveDroneStateResponse {
+  bool success = 1;
+  string message = 2;
+}
+
 message JsonResponse {
   string json = 1;
   string error = 2;

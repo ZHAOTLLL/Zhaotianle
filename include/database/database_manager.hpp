@@ -33,6 +33,11 @@ public:
     std::optional<ExtendedDroneState> getDroneState(DroneId drone_id);
     bool saveDroneAttributes(DroneId drone_id, const std::map<std::string, std::string>& attributes);
     std::optional<std::map<std::string, std::string>> getDroneAttributes(DroneId drone_id);
+    
+    // 隐私空域无人机管理
+    bool saveDroneInPrivacyZone(DroneId drone_id, const ExtendedDroneState& state, const std::string& zone_id);
+    bool saveFlightPathInPrivacyZone(DroneId drone_id, const std::vector<Waypoint>& path, const std::string& zone_id);
+    std::vector<std::string> getDronesInPrivacyZones();
 
     // 边缘设备数据管理
     bool saveEdgeDeviceInfo(const std::string& device_id, const std::string& device_name, const std::string& location, bool online);

@@ -17,6 +17,7 @@ bool startsWith(const std::string& text, const std::string& prefix) {
 
 bool AirspaceResourceManager::loadLocationsFromConfig(const std::string& config_file) {
     locations_.clear();
+    area_restrictions_.clear();
 
     std::ifstream file(config_file);
     if (!file.is_open()) {
@@ -24,7 +25,10 @@ bool AirspaceResourceManager::loadLocationsFromConfig(const std::string& config_
     }
 
     Location current;
-    bool in_block = false;
+    AreaRestriction current_restriction;
+    bool in_locations = false;
+    bool in_area_restrictions = false;
+    bool in_restriction_block = false;
     std::string line;
     while (std::getline(file, line)) {
         auto trimmed = trim(line);
@@ -32,59 +36,136 @@ bool AirspaceResourceManager::loadLocationsFromConfig(const std::string& config_
             continue;
         }
 
-        if (startsWith(trimmed, "-")) {
-            if (in_block) {
-                locations_.push_back(current);
-                current = Location{};
-            }
-            in_block = true;
-            trimmed = trim(trimmed.substr(1));
-            // 如果"-"后面直接是"name:"，需要解析这一行
-            // 例如: "- name: 蕙园8栋" -> "name: 蕙园8栋"
-        }
-
-        std::string key;
-        std::string value;
-        if (!parseKeyValue(trimmed, key, value)) {
+        // 检测是否进入locations部分
+        if (trimmed == "locations:") {
+            in_locations = true;
+            in_area_restrictions = false;
+            in_restriction_block = false;
             continue;
         }
 
-        if (key == "name") {
-            current.name = value;
-        } else if (key == "code") {
-            current.code = value;
-        } else if (key == "description") {
-            current.description = value;
-        } else if (key == "latitude" || key == "lat") {
-            // 支持latitude和lat两种格式
-            current.latitude = std::stod(value);
-        } else if (key == "longitude" || key == "lon") {
-            // 支持longitude和lon两种格式
-            current.longitude = std::stod(value);
-        } else if (key == "altitude" || key == "alt") {
-            // 支持altitude和alt两种格式
-            current.altitude = std::stod(value);
-        } else if (key == "access_restrictions") {
-            current.access_restrictions.clear();
-            if (startsWith(value, "[")) {
-                std::stringstream ss(value.substr(1, value.size() - 2));
-                std::string entry;
-                while (std::getline(ss, entry, ',')) {
-                    current.access_restrictions.push_back(trim(entry));
+        // 检测是否进入area_restrictions部分
+        if (trimmed == "airspace_rules:") {
+            in_locations = false;
+            in_area_restrictions = true;
+            in_restriction_block = false;
+            continue;
+        }
+
+        if (in_area_restrictions && trimmed == "area_restrictions:") {
+            continue;
+        }
+
+        // 处理locations部分
+        if (in_locations) {
+            if (startsWith(trimmed, "-")) {
+                if (current.name != "") {
+                    locations_.push_back(current);
+                    current = Location{};
+                }
+                trimmed = trim(trimmed.substr(1));
+            }
+
+            std::string key;
+            std::string value;
+            if (!parseKeyValue(trimmed, key, value)) {
+                continue;
+            }
+
+            if (key == "name") {
+                current.name = value;
+            } else if (key == "code") {
+                current.code = value;
+            } else if (key == "description") {
+                current.description = value;
+            } else if (key == "latitude" || key == "lat") {
+                current.latitude = std::stod(value);
+            } else if (key == "longitude" || key == "lon") {
+                current.longitude = std::stod(value);
+            } else if (key == "altitude" || key == "alt") {
+                current.altitude = std::stod(value);
+            } else if (key == "access_restrictions") {
+                current.access_restrictions.clear();
+                if (startsWith(value, "[")) {
+                    std::stringstream ss(value.substr(1, value.size() - 2));
+                    std::string entry;
+                    while (std::getline(ss, entry, ',')) {
+                        current.access_restrictions.push_back(trim(entry));
+                    }
+                } else {
+                    current.access_restrictions.push_back(value);
                 }
             } else {
-                current.access_restrictions.push_back(value);
+                current.attributes[key] = value;
             }
-        } else {
-            current.attributes[key] = value;
+        }
+
+        // 处理area_restrictions部分
+        if (in_area_restrictions) {
+            // 检查是否是新的区域限制块
+            size_t colon_pos = trimmed.find(':');
+            if (colon_pos != std::string::npos && !startsWith(trimmed, "  ")) {
+                std::string restriction_name = trim(trimmed.substr(0, colon_pos));
+                if (restriction_name != "area_restrictions" && restriction_name != "airspace_rules") {
+                    if (in_restriction_block && current_restriction.name != "") {
+                        area_restrictions_[current_restriction.name] = current_restriction;
+                    }
+                    current_restriction = AreaRestriction{};
+                    current_restriction.name = restriction_name;
+                    in_restriction_block = true;
+                }
+            } else if (in_restriction_block) {
+                std::string key;
+                std::string value;
+                if (!parseKeyValue(trimmed, key, value)) {
+                    continue;
+                }
+
+                if (key == "privacy_protection") {
+                    current_restriction.privacy_protection = (value == "true");
+                } else if (key == "max_altitude") {
+                    current_restriction.max_altitude = std::stod(value);
+                } else if (key == "allowed_operations") {
+                    current_restriction.allowed_operations.clear();
+                    if (startsWith(value, "[")) {
+                        std::stringstream ss(value.substr(1, value.size() - 2));
+                        std::string entry;
+                        while (std::getline(ss, entry, ',')) {
+                            current_restriction.allowed_operations.push_back(trim(entry));
+                        }
+                    } else {
+                        current_restriction.allowed_operations.push_back(value);
+                    }
+                }
+            }
         }
     }
 
-    if (in_block) {
+    // 处理最后一个location
+    if (current.name != "") {
         locations_.push_back(current);
     }
 
-    return !locations_.empty();
+    // 处理最后一个area_restriction
+    if (current_restriction.name != "") {
+        area_restrictions_[current_restriction.name] = current_restriction;
+    }
+
+    return !locations_.empty() || !area_restrictions_.empty();
+}
+
+bool AirspaceResourceManager::isInPrivacyZone(double latitude, double longitude, std::string& zone_id) const {
+    // 这里实现一个简单的逻辑：检查是否有residential_area，并且假设所有residential_area都是隐私空域
+    // 实际项目中，应该根据具体的地理边界来判断
+    for (const auto& [name, restriction] : area_restrictions_) {
+        if (restriction.privacy_protection) {
+            // 这里应该有更复杂的地理边界检查逻辑
+            // 暂时简单返回true，假设无人机在隐私空域内
+            zone_id = name;
+            return true;
+        }
+    }
+    return false;
 }
 
 std::vector<AirspaceResourceManager::Location> AirspaceResourceManager::getAllLocations() const {

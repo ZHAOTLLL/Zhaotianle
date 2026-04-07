@@ -14,6 +14,7 @@ find_package(nlohmann_json QUIET)
 find_package(Boost 1.70 QUIET COMPONENTS system)
 find_package(TBB QUIET)
 find_package(OpenMP QUIET)
+find_package(PostgreSQL QUIET)
 
 # TBB 和 OpenMP 配置
 if(TBB_FOUND)
@@ -41,6 +42,11 @@ else()
 endif()
 
 include_directories(${CMAKE_SOURCE_DIR}/include ${MIRACL_CORE_DIR})
+if(PostgreSQL_FOUND)
+    include_directories(${PostgreSQL_INCLUDE_DIRS})
+    link_libraries(${PostgreSQL_LIBRARIES})
+    message(STATUS "PostgreSQL: ${PostgreSQL_LIBRARIES}")
+endif()
 
 # 后端核心源（访问控制、MAVLink、签名、飞行控制等，不含 main/http）
 set(CORE_BACKEND_SOURCES
@@ -406,6 +412,7 @@ if(DRONE_GRPC_USE_CONFIG OR DRONE_GRPC_USE_PKGCONFIG)
     add_executable(database_service_app
         src/database/database_service_main.cpp
         src/database/database_manager.cpp
+        src/resources/airspace_resource_manager.cpp
         "${PROTO_PB_CC}" "${PROTO_GRPC_CC}"
     )
     if(DRONE_GRPC_USE_CONFIG)

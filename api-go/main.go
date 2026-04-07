@@ -88,7 +88,6 @@ func main() {
 		r.Any("/api/v1/drones/*path", func(c *gin.Context) { proxy.ServeHTTP(c.Writer, c.Request) })
 		r.Any("/api/v1/flight/*path", func(c *gin.Context) { proxy.ServeHTTP(c.Writer, c.Request) })
 		r.Any("/api/v1/access/*path", func(c *gin.Context) { proxy.ServeHTTP(c.Writer, c.Request) })
-		r.Any("/api/*path", func(c *gin.Context) { proxy.ServeHTTP(c.Writer, c.Request) })
 	}
 
 	r.GET("/", func(c *gin.Context) {

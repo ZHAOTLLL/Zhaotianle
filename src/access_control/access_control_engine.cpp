@@ -1933,6 +1933,39 @@ std::optional<FlightPlan> AccessControlEngine::generateFlightPlan(
         
         if (!target_alias.empty()) {
             std::cout << "[generateFlightPlan] 尝试从空域资源配置查找target_alias: " << target_alias << std::endl;
+
+            // 优先从数据库缓存读取隐私位置数据，避免仅依赖配置文件。
+            if (state_manager_) {
+                auto db_manager = state_manager_->getDatabaseManager();
+                if (db_manager) {
+                    auto location_cache = db_manager->getCache("privacy:location:name:" + target_alias);
+                    if (location_cache && !location_cache->empty()) {
+#ifdef HAVE_NLOHMANN_JSON
+                        try {
+                            const auto j = nlohmann::json::parse(*location_cache);
+                            if (j.contains("latitude") && j.contains("longitude")) {
+                                target_position.latitude = j["latitude"].get<double>();
+                                target_position.longitude = j["longitude"].get<double>();
+                                target_position.altitude = j.contains("altitude")
+                                    ? j["altitude"].get<double>()
+                                    : takeoff_point.position.altitude;
+                                target_found = true;
+                                std::cout << "[generateFlightPlan] 从数据库缓存加载目标位置: "
+                                          << target_alias << " -> (" << target_position.latitude
+                                          << ", " << target_position.longitude << ")" << std::endl;
+                            }
+                        } catch (const std::exception& e) {
+                            std::cout << "[警告] [generateFlightPlan] 解析数据库隐私位置失败: "
+                                      << e.what() << std::endl;
+                        }
+#endif
+                    }
+                }
+            }
+
+            if (target_found) {
+                // 已从数据库成功获取，不再回退配置文件。
+            } else {
             
             // 【实验模式】禁用缓存机制，每次重新创建资源管理器
             // 使用缓存的资源管理器（避免重复加载文件）
@@ -2023,6 +2056,7 @@ std::optional<FlightPlan> AccessControlEngine::generateFlightPlan(
                 }
             } else {
                 std::cout << "[警告] [generateFlightPlan] 无法加载空域配置文件，无法查询目标位置坐标" << std::endl;
+            }
             }
         }
         

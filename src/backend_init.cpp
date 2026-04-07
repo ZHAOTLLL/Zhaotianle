@@ -26,6 +26,8 @@
 #include "authentication/authentication_provider_factory.hpp"
 #include "signature/geofence_signature_service.hpp"
 #include "signature/mission_signature_verifier.hpp"
+#include "database/database_manager.hpp"
+#include "resources/airspace_resource_manager.hpp"
 
 #ifdef USE_CONCURRENT_MAVLINK
 #include "communication/mavlink_manager_concurrent_runner.hpp"
@@ -37,8 +39,11 @@ namespace backend {
 using namespace drone_control;
 
 static std::string s_mavlink_connection_url = "udp://0.0.0.0:14550";
+static bool s_core_direct_mavlink_enabled = false;
 static std::unique_ptr<MAVLinkManager> s_mavlink_mgr;
 static std::shared_ptr<DroneStateManager> s_state_mgr;
+static std::shared_ptr<DatabaseManager> s_database_mgr;
+static std::shared_ptr<resources::AirspaceResourceManager> s_airspace_mgr;
 static std::unique_ptr<AccessControlEngine> s_access_engine;
 static std::unique_ptr<FlightControlModule> s_flight_control;
 static std::unique_ptr<api::DroneAPI> s_drone_api;
@@ -64,6 +69,11 @@ static bool loadConfig(const std::string& config_file) {
         s_mavlink_connection_url = config["network"]["mavlink"]["connection_url"].as<std::string>();
         std::cout << "MAVLink connection_url from config: " << s_mavlink_connection_url << std::endl;
       }
+      if (config["features"] && config["features"]["core_direct_mavlink_enabled"]) {
+        s_core_direct_mavlink_enabled = config["features"]["core_direct_mavlink_enabled"].as<bool>();
+      }
+      std::cout << "Core direct MAVLink mode: "
+                << (s_core_direct_mavlink_enabled ? "ENABLED" : "DISABLED(edge bridge mode)") << std::endl;
     } catch (const std::exception& e) {
       std::cerr << "Failed to parse MAVLink connection_url: " << e.what() << std::endl;
     }
@@ -77,7 +87,32 @@ static bool loadConfig(const std::string& config_file) {
 static void setupMavLink() {
   s_mavlink_mgr = std::make_unique<MAVLinkManager>();
   s_state_mgr = std::make_shared<DroneStateManager>();
+  s_database_mgr = std::make_shared<DatabaseManager>();
+  (void)s_database_mgr->initialize("", 0, "drone_control", "postgres", "postgres",
+                                   "localhost", 6379, "");
+  s_state_mgr->setDatabaseManager(s_database_mgr);
+
+  s_airspace_mgr = std::make_shared<resources::AirspaceResourceManager>();
+  const std::vector<std::string> airspace_paths = {
+      "config/airspace_config.yaml",
+      "./config/airspace_config.yaml",
+      "../config/airspace_config.yaml",
+      "../../config/airspace_config.yaml",
+      "build/config/airspace_config.yaml",
+      "../build/config/airspace_config.yaml"};
+  for (const auto& p : airspace_paths) {
+    if (s_airspace_mgr->loadLocationsFromConfig(p)) {
+      s_state_mgr->setAirspaceResourceManager(s_airspace_mgr);
+      std::cout << "Airspace config loaded for privacy DB sync: " << p << std::endl;
+      break;
+    }
+  }
+
   s_mavlink_mgr->setStateManager(s_state_mgr);
+  if (!s_core_direct_mavlink_enabled) {
+    std::cout << "[核心服务][连接] 核心直连无人机已禁用，当前由edge负责发现与MAVLink连接" << std::endl;
+    return;
+  }
 #ifdef USE_CONCURRENT_MAVLINK
   s_mavlink_mgr->startConcurrentMode();
   s_io_context = std::make_unique<boost::asio::io_context>();
@@ -211,6 +246,8 @@ void shutdown() {
 #endif
   s_mavlink_mgr.reset();
   s_state_mgr.reset();
+  s_airspace_mgr.reset();
+  s_database_mgr.reset();
   s_access_engine.reset();
   std::cout << "Backend shutdown done" << std::endl;
 }

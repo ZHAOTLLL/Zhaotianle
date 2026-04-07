@@ -6,6 +6,7 @@
 #include <iostream>
 #include <algorithm>
 #include <chrono>
+#include <sstream>
 
 namespace drone_control {
 
@@ -17,6 +18,61 @@ DroneStateManager::DroneStateManager()
 
 DroneStateManager::~DroneStateManager() {
     clearAllStates();
+}
+
+void DroneStateManager::setAirspaceResourceManager(std::shared_ptr<resources::AirspaceResourceManager> airspace_manager) {
+    airspace_manager_ = std::move(airspace_manager);
+    if (!airspace_manager_ || !database_manager_) {
+        return;
+    }
+
+    // 将隐私空域规则快照写入数据库缓存，避免仅依赖本地配置文件解析。
+    const auto restrictions = airspace_manager_->getAreaRestrictions();
+    for (const auto& [zone_name, zone_rule] : restrictions) {
+        if (!zone_rule.privacy_protection) {
+            continue;
+        }
+
+        std::ostringstream payload;
+        payload << "{"
+                << "\"zone_id\":\"" << zone_name << "\","
+                << "\"privacy_protection\":true,"
+                << "\"max_altitude\":" << zone_rule.max_altitude << ","
+                << "\"allowed_operations\":[";
+        for (size_t i = 0; i < zone_rule.allowed_operations.size(); ++i) {
+            if (i > 0) {
+                payload << ",";
+            }
+            payload << "\"" << zone_rule.allowed_operations[i] << "\"";
+        }
+        payload << "]}";
+
+        database_manager_->setCache("privacy:zone:rule:" + zone_name, payload.str(), 24 * 3600);
+    }
+
+    const auto locations = airspace_manager_->getAllLocations();
+    for (const auto& location : locations) {
+        if (location.name.empty()) {
+            continue;
+        }
+        std::ostringstream location_payload;
+        location_payload << "{"
+                         << "\"name\":\"" << location.name << "\","
+                         << "\"code\":\"" << location.code << "\","
+                         << "\"latitude\":" << location.latitude << ","
+                         << "\"longitude\":" << location.longitude << ","
+                         << "\"altitude\":" << location.altitude
+                         << "}";
+        database_manager_->setCache("privacy:location:name:" + location.name, location_payload.str(), 24 * 3600);
+    }
+}
+
+void DroneStateManager::setDatabaseManager(std::shared_ptr<DatabaseManager> database_manager) {
+    database_manager_ = std::move(database_manager);
+    if (database_manager_ && airspace_manager_) {
+        // 已经有空域管理器时，立即触发一次规则写库。
+        setAirspaceResourceManager(airspace_manager_);
+    }
 }
 
 void DroneStateManager::updateDroneState(DroneId drone_id, const ExtendedDroneState& state) {

@@ -70,13 +70,9 @@ public:
 
 public:
     // 依赖注入
-    void setAirspaceResourceManager(std::shared_ptr<resources::AirspaceResourceManager> airspace_manager) {
-        airspace_manager_ = airspace_manager;
-    }
-    
-    void setDatabaseManager(std::shared_ptr<DatabaseManager> database_manager) {
-        database_manager_ = database_manager;
-    }
+    void setAirspaceResourceManager(std::shared_ptr<resources::AirspaceResourceManager> airspace_manager);
+    void setDatabaseManager(std::shared_ptr<DatabaseManager> database_manager);
+    std::shared_ptr<DatabaseManager> getDatabaseManager() const { return database_manager_; }
 
 private:
     struct DroneStateInfo {

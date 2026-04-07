@@ -12,6 +12,7 @@
 #include <mutex>
 #include <chrono>
 #include <functional>
+#include <atomic>
 
 // 包含 gRPC 头文件
 #include <grpcpp/grpcpp.h>
@@ -63,6 +64,8 @@ public:
     // 核心服务通信
     bool syncDroneState(DroneId drone_id, const ExtendedDroneState& state);
     bool evaluateAccess(const std::string& geofence_token, DroneId drone_id);
+    std::string getCachedAccessToken() const;
+    std::string getCachedFlightPlanJson() const;
 
 private:
     // 边缘设备信息
@@ -71,6 +74,7 @@ private:
     // 核心服务连接
     std::shared_ptr<grpc::Channel> core_channel_;
     bool connected_to_core_;
+    std::atomic<bool> heartbeat_running_{false};
 
     // 无人机状态管理
     mutable std::mutex drones_mutex_;
@@ -79,6 +83,11 @@ private:
     // 回调
     std::vector<EdgeDeviceStatusCallback> edge_device_status_callbacks_;
     std::vector<DroneStateCallback> drone_state_callbacks_;
+
+    // 最近一次核心访问评估返回的 token/signature（供后续链路复用）
+    mutable std::mutex token_mutex_;
+    std::string cached_access_token_;
+    std::string cached_flight_plan_json_;
 
     // 内部方法
     void heartbeatToCore();

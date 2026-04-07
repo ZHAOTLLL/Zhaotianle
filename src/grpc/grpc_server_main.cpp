@@ -10,6 +10,11 @@
 #include <memory>
 #include <string>
 #include <iomanip>
+#include <chrono>
+#ifdef HAVE_NLOHMANN_JSON
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+#endif
 
 #include "drone_control.grpc.pb.h"
 #include "drone_control.pb.h"
@@ -56,6 +61,104 @@ static void signal_handler(int) {
   if (g_server) g_server->Shutdown();
 }
 
+namespace {
+
+const char* channelStateName(grpc_connectivity_state state) {
+  switch (state) {
+    case GRPC_CHANNEL_IDLE: return "IDLE";
+    case GRPC_CHANNEL_CONNECTING: return "CONNECTING";
+    case GRPC_CHANNEL_READY: return "READY";
+    case GRPC_CHANNEL_TRANSIENT_FAILURE: return "TRANSIENT_FAILURE";
+    case GRPC_CHANNEL_SHUTDOWN: return "SHUTDOWN";
+    default: return "UNKNOWN";
+  }
+}
+
+drone_control::AccessRequest buildEdgeAccessRequest(const EvaluateEdgeAccessRequest* req) {
+  drone_control::AccessRequest access_request;
+  bool parsed_from_json = false;
+
+#ifdef HAVE_NLOHMANN_JSON
+  if (!req->request_json().empty()) {
+    try {
+      const json j = json::parse(req->request_json());
+      if (j.contains("drone_id")) {
+        access_request.drone_id = j["drone_id"].get<int>();
+      } else {
+        access_request.drone_id = req->drone_id();
+      }
+      if (j.contains("target_location")) {
+        access_request.target_location = j["target_location"].get<std::string>();
+      }
+      if (j.contains("operation_type")) {
+        access_request.operation_type = j["operation_type"].get<std::string>();
+      }
+      if (j.contains("context") && j["context"].is_object()) {
+        for (const auto& [k, v] : j["context"].items()) {
+          if (v.is_string()) {
+            access_request.context[k] = v.get<std::string>();
+          } else {
+            access_request.context[k] = v.dump();
+          }
+        }
+      }
+      if (j.contains("mission_signature")) {
+        access_request.context["mission_signature"] = j["mission_signature"].is_string()
+            ? j["mission_signature"].get<std::string>()
+            : j["mission_signature"].dump();
+      }
+      if (j.contains("certificate_data") && j["certificate_data"].is_string()) {
+        access_request.context["credential"] = j["certificate_data"].get<std::string>();
+        access_request.context["credential_type"] = "x509_base64";
+      }
+      parsed_from_json = true;
+    } catch (const std::exception& e) {
+      std::cerr << "[核心服务] request_json 解析失败，回退字段组装: " << e.what() << std::endl;
+    }
+  }
+#endif
+
+  if (!parsed_from_json) {
+    access_request.drone_id = req->drone_id();
+  }
+  access_request.request_source = "edge_device";
+  access_request.request_time = std::chrono::system_clock::now();
+  access_request.context["edge_device_id"] = req->edge_device_id().empty() ? req->device_id() : req->edge_device_id();
+  access_request.context["geofence_token"] = req->geofence_token();
+  return access_request;
+}
+
+std::string buildFlightPlanJson(const drone_control::AccessDecision& decision) {
+  if (!decision.flight_plan.has_value()) {
+    return "";
+  }
+  const auto& plan = decision.flight_plan.value();
+  std::ostringstream os;
+  os << "{"
+     << "\"plan_id\":\"" << plan.plan_id << "\","
+     << "\"plan_name\":\"" << plan.plan_name << "\","
+     << "\"max_altitude\":" << plan.max_altitude << ","
+     << "\"max_speed\":" << plan.max_speed << ","
+     << "\"waypoints\":[";
+  for (size_t i = 0; i < plan.waypoints.size(); ++i) {
+    const auto& wp = plan.waypoints[i];
+    if (i > 0) {
+      os << ",";
+    }
+    os << "{"
+       << "\"latitude\":" << wp.position.latitude << ","
+       << "\"longitude\":" << wp.position.longitude << ","
+       << "\"altitude\":" << wp.position.altitude << ","
+       << "\"speed_mps\":" << wp.speed_mps << ","
+       << "\"action\":\"" << wp.action << "\""
+       << "}";
+  }
+  os << "]}";
+  return os.str();
+}
+
+} // namespace
+
 // 边缘设备服务实现
 class EdgeDeviceServiceImpl final : public DroneControlService::Service {
  public:
@@ -63,6 +166,16 @@ class EdgeDeviceServiceImpl final : public DroneControlService::Service {
     // 初始化数据库服务客户端
     database_channel_ = grpc::CreateChannel("localhost:50052", grpc::InsecureChannelCredentials());
     database_stub_ = DatabaseService::NewStub(database_channel_);
+    const bool ready = database_channel_->WaitForConnected(
+        std::chrono::system_clock::now() + std::chrono::seconds(2));
+    const auto state = database_channel_->GetState(false);
+    if (ready) {
+      std::cout << "[核心服务][连接] 到数据库服务连接已建立: localhost:50052 (state="
+                << channelStateName(state) << ")" << std::endl;
+    } else {
+      std::cout << "[核心服务][连接] 数据库服务通道已创建: localhost:50052 (state="
+                << channelStateName(state) << ", 首个RPC时重试)" << std::endl;
+    }
   }
 
   grpc::Status RegisterEdgeDevice(grpc::ServerContext* ctx, const RegisterEdgeDeviceRequest* req, RegisterEdgeDeviceResponse* rsp) override {
@@ -133,6 +246,9 @@ class EdgeDeviceServiceImpl final : public DroneControlService::Service {
   grpc::Status EvaluateEdgeAccess(grpc::ServerContext* ctx, const EvaluateEdgeAccessRequest* req, EvaluateEdgeAccessResponse* rsp) override {
     (void)ctx;
     std::cout << "[核心服务] 收到访问权限评估请求: 设备=" << req->device_id() << ", 无人机=" << req->drone_id() << std::endl;
+    std::cout << "[核心服务][DEBUG] 入参摘要: edge_device_id=" << req->edge_device_id()
+              << ", token_len=" << req->geofence_token().size()
+              << ", request_json_len=" << req->request_json().size() << std::endl;
     
     // 获取访问控制引擎
     auto* access_engine = backend::getAccessControlEngine();
@@ -143,13 +259,13 @@ class EdgeDeviceServiceImpl final : public DroneControlService::Service {
       return grpc::Status::OK;
     }
     
-    // 构建访问请求
-    drone_control::AccessRequest access_request;
-    access_request.drone_id = req->drone_id();
-    access_request.request_source = "edge_device";
-    access_request.context["edge_device_id"] = req->device_id();
-    access_request.context["geofence_token"] = req->geofence_token();
-    
+    // 优先使用 request_json 构建完整请求，失败时回退到兼容字段
+    drone_control::AccessRequest access_request = buildEdgeAccessRequest(req);
+    std::cout << "[核心服务][DEBUG] 组装访问请求: drone_id=" << access_request.drone_id
+              << ", target=" << access_request.target_location
+              << ", op=" << access_request.operation_type
+              << ", context_size=" << access_request.context.size() << std::endl;
+
     // 评估访问权限
     drone_control::AccessDecision decision = access_engine->evaluateAccess(access_request);
     
@@ -157,6 +273,14 @@ class EdgeDeviceServiceImpl final : public DroneControlService::Service {
     
     rsp->set_access_granted(decision.granted);
     rsp->set_reason(decision.reason);
+    rsp->set_token(decision.geofence_signature);
+    rsp->set_validity_duration(decision.validity_duration.count());
+    rsp->set_decision(decision.granted ? "PERMIT" : "DENY");
+    rsp->set_flight_plan_json(buildFlightPlanJson(decision));
+    std::cout << "[核心服务][DEBUG] 评估响应: granted=" << (decision.granted ? "true" : "false")
+              << ", token_len=" << decision.geofence_signature.size()
+              << ", validity=" << decision.validity_duration.count()
+              << ", flight_plan_len=" << rsp->flight_plan_json().size() << std::endl;
     
     return grpc::Status::OK;
   }

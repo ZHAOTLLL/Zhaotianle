@@ -124,6 +124,7 @@ performance:
 
 # 功能开关
 features:
+  core_direct_mavlink_enabled: false
   authentication_required: true
   geofence_signature_enabled: true
   flight_control_enabled: true

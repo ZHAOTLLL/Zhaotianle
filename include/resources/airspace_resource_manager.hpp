@@ -35,6 +35,7 @@ public:
     std::optional<Location> getLocationByCode(const std::string& code) const;
     std::optional<Location> getLocationByName(const std::string& name) const;
     bool isInPrivacyZone(double latitude, double longitude, std::string& zone_id) const;
+    const std::map<std::string, AreaRestriction>& getAreaRestrictions() const { return area_restrictions_; }
 
 private:
     std::vector<Location> locations_;

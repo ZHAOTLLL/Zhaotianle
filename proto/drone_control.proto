@@ -64,6 +64,10 @@ message EvaluateEdgeAccessRequest {
 message EvaluateEdgeAccessResponse {
   bool access_granted = 1;
   string reason = 2;
+  string token = 3;
+  int64 validity_duration = 4;
+  string decision = 5;
+  string flight_plan_json = 6;
 }
 
 message HeartbeatRequest {

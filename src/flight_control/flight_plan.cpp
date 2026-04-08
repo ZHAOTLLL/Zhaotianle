@@ -1174,6 +1174,7 @@ void PathPlanner::retrieveFromRTree(RTreeNode* node, const Position& start, cons
     } else {
         for (auto child : node->children) {
             // 简化处理，实际R*树需要检查边界是否与查询区域相交
+
             retrieveFromRTree(child, start, goal, max_distance, result);
         }
     }

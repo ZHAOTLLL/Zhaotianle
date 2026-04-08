@@ -13,6 +13,7 @@
 #include <set>
 #include <cmath>
 #include <algorithm>
+#include <cstring>
 #include <chrono>
 #include <ctime>
 #include <openssl/err.h>
@@ -1903,6 +1904,7 @@ std::string GeofenceSignatureService::encryptSanitizedGeofenceWithECCPoint(
 #endif
 }
 
+#if 0
 std::string GeofenceSignatureService::generateGeofenceDataForPath(
     const std::vector<Waypoint>& waypoints,
     uint64_t validity_period,
@@ -2108,6 +2110,7 @@ std::string GeofenceSignatureService::generateGeofenceDataForPath(
     return "";
 #endif
 }
+#endif
 
 std::string GeofenceSignatureService::generateGeofenceDataForPathWithTASignature(
     const std::vector<Waypoint>& waypoints,
@@ -2165,10 +2168,111 @@ std::string GeofenceSignatureService::generateGeofenceDataForPathWithTASignature
         std::string ta_message = ta_signed["ta_signature"]["message"].get<std::string>();
         std::string ta_pk_hex = ta_signed["public_keys"]["ta_pk"].get<std::string>();
         
-        // 验证TA签名（使用与generateGeofenceDataForPath相同的验证逻辑）
-        // 这里简化处理，实际应该调用verifySignature函数
         std::cout << "[GeofenceSignatureService] [Baseline-Enhanced] 验证TA签名..." << std::endl;
-        // TODO: 实现TA签名验证逻辑
+        auto hexToBytes = [](const std::string& hex, std::vector<unsigned char>& out) -> bool {
+            if (hex.empty() || (hex.size() % 2) != 0) {
+                return false;
+            }
+            out.clear();
+            out.reserve(hex.size() / 2);
+            for (size_t i = 0; i < hex.size(); i += 2) {
+                const std::string byte_str = hex.substr(i, 2);
+                try {
+                    out.push_back(static_cast<unsigned char>(std::stoul(byte_str, nullptr, 16)));
+                } catch (...) {
+                    return false;
+                }
+            }
+            return true;
+        };
+
+        std::vector<unsigned char> ta_sig_bytes;
+        std::vector<unsigned char> ta_pk_bytes;
+        if (!hexToBytes(ta_signature_hex, ta_sig_bytes) || !hexToBytes(ta_pk_hex, ta_pk_bytes)) {
+            std::cerr << "[GeofenceSignatureService] [Baseline-Enhanced] TA签名或公钥十六进制格式错误" << std::endl;
+            return "";
+        }
+        if (ta_sig_bytes.size() != static_cast<size_t>(2 * MODBYTES_B256_56)) {
+            std::cerr << "[GeofenceSignatureService] [Baseline-Enhanced] TA签名长度错误: " << ta_sig_bytes.size() << std::endl;
+            return "";
+        }
+
+        unsigned char ta_hash[SHA256_DIGEST_LENGTH];
+        EVP_MD_CTX* ta_mdctx = EVP_MD_CTX_new();
+        if (!ta_mdctx) {
+            std::cerr << "[GeofenceSignatureService] [Baseline-Enhanced] 无法创建TA验签哈希上下文" << std::endl;
+            return "";
+        }
+        if (EVP_DigestInit_ex(ta_mdctx, EVP_sha256(), nullptr) != 1 ||
+            EVP_DigestUpdate(ta_mdctx, ta_message.c_str(), ta_message.length()) != 1 ||
+            EVP_DigestFinal_ex(ta_mdctx, ta_hash, nullptr) != 1) {
+            EVP_MD_CTX_free(ta_mdctx);
+            std::cerr << "[GeofenceSignatureService] [Baseline-Enhanced] TA验签哈希计算失败" << std::endl;
+            return "";
+        }
+        EVP_MD_CTX_free(ta_mdctx);
+
+        BIG ta_order;
+        BIG_rcopy(ta_order, CURVE_Order);
+        ECP ta_generator;
+        ECP_generator(&ta_generator);
+
+        char pk_raw[2 * MODBYTES_B256_56 + 1];
+        if (ta_pk_bytes.size() > sizeof(pk_raw)) {
+            std::cerr << "[GeofenceSignatureService] [Baseline-Enhanced] TA公钥长度超限" << std::endl;
+            return "";
+        }
+        std::memcpy(pk_raw, ta_pk_bytes.data(), ta_pk_bytes.size());
+        octet ta_pk_oct = {0, static_cast<int>(ta_pk_bytes.size()), pk_raw};
+        ta_pk_oct.len = static_cast<int>(ta_pk_bytes.size());
+
+        ECP ta_pubkey;
+        if (!ECP_fromOctet(&ta_pubkey, &ta_pk_oct)) {
+            std::cerr << "[GeofenceSignatureService] [Baseline-Enhanced] TA公钥点解析失败" << std::endl;
+            return "";
+        }
+        ECP_affine(&ta_pubkey);
+
+        BIG ta_r, ta_s;
+        BIG_fromBytesLen(ta_r, reinterpret_cast<char*>(ta_sig_bytes.data()), MODBYTES_B256_56);
+        BIG_fromBytesLen(ta_s, reinterpret_cast<char*>(ta_sig_bytes.data() + MODBYTES_B256_56), MODBYTES_B256_56);
+        BIG_mod(ta_r, ta_order);
+        BIG_mod(ta_s, ta_order);
+        if (BIG_iszilch(ta_r) || BIG_iszilch(ta_s)) {
+            std::cerr << "[GeofenceSignatureService] [Baseline-Enhanced] TA签名r/s无效" << std::endl;
+            return "";
+        }
+
+        BIG z;
+        BIG_fromBytesLen(z, reinterpret_cast<char*>(ta_hash), SHA256_DIGEST_LENGTH);
+        BIG_mod(z, ta_order);
+
+        BIG s_inv, u1, u2;
+        BIG_invmodp(s_inv, ta_s, ta_order);
+        BIG_modmul(u1, z, s_inv, ta_order);
+        BIG_modmul(u2, ta_r, s_inv, ta_order);
+
+        ECP u1g, u2q, sum;
+        ECP_copy(&u1g, &ta_generator);
+        ECP_mul(&u1g, u1);
+        ECP_copy(&u2q, &ta_pubkey);
+        ECP_mul(&u2q, u2);
+        ECP_add(&u1g, &u2q);
+        ECP_copy(&sum, &u1g);
+        if (ECP_isinf(&sum)) {
+            std::cerr << "[GeofenceSignatureService] [Baseline-Enhanced] TA签名验证失败: 点无穷远" << std::endl;
+            return "";
+        }
+        ECP_affine(&sum);
+
+        BIG x_check, y_check;
+        ECP_get(x_check, y_check, &sum);
+        BIG_mod(x_check, ta_order);
+        if (BIG_comp(x_check, ta_r) != 0) {
+            std::cerr << "[GeofenceSignatureService] [Baseline-Enhanced] TA签名验证失败: r不匹配" << std::endl;
+            return "";
+        }
+        std::cout << "[GeofenceSignatureService] [Baseline-Enhanced] TA签名验证通过" << std::endl;
         
         // 3. 计算路径经过的围栏ID
         std::vector<uint32_t> required_fence_ids = grid_mapper_.pathToFenceIds(waypoints);
@@ -2351,6 +2455,7 @@ std::string GeofenceSignatureService::generateGeofenceDataForPathWithTASignature
 #endif
 }
 
+#if 0
 std::string GeofenceSignatureService::generateTASignatureForRegion(
     uint64_t validity_period,
     const std::string& region_id,
@@ -2602,7 +2707,9 @@ std::string GeofenceSignatureService::generateTASignatureForRegion(
     return "";
 #endif
 }
+#endif
 
+#if 0
 std::string GeofenceSignatureService::generateGeofenceDataForEntireRegion(
     uint64_t validity_period,
     uint32_t drone_id,
@@ -2781,6 +2888,7 @@ std::string GeofenceSignatureService::generateGeofenceDataForEntireRegion(
     return "";
 #endif
 }
+#endif
 
 GeofenceSignatureService::DSSVerificationResult 
 GeofenceSignatureService::verifyDSSGeofenceFromJson(const std::string& json_content) {

@@ -51,6 +51,10 @@ endif()
 # 后端核心源（访问控制、MAVLink、签名、飞行控制等，不含 main/http）
 set(CORE_BACKEND_SOURCES
     src/communication/mavlink_manager.cpp
+    src/communication/mavlink_manager_control.cpp
+    src/communication/mavlink_manager_tx.cpp
+    src/communication/mavlink_manager_access.cpp
+    src/communication/mavlink_manager_ingest.cpp
     src/communication/mavlink_manager_concurrent_runner.cpp
     src/state/drone_state_manager.cpp
     src/access_control/access_control_engine.cpp
@@ -67,6 +71,9 @@ set(CORE_BACKEND_SOURCES
     src/attributes/database_attribute_provider.cpp
     src/resources/airspace_resource_manager.cpp
     src/signature/geofence_signature_service.cpp
+    src/signature/geofence_signature_service_path.cpp
+    src/signature/geofence_signature_service_region.cpp
+    src/signature/geofence_signature_service_ta.cpp
     src/signature/dss_ms_signature.cpp
     src/signature/mission_signature_verifier.cpp
     src/flight_control/flight_control_module.cpp
@@ -101,6 +108,10 @@ endmacro()
 add_executable(${PROJECT_NAME}
     src/main.cpp
     src/communication/mavlink_manager.cpp
+    src/communication/mavlink_manager_control.cpp
+    src/communication/mavlink_manager_tx.cpp
+    src/communication/mavlink_manager_access.cpp
+    src/communication/mavlink_manager_ingest.cpp
     src/state/drone_state_manager.cpp
     src/access_control/access_control_engine.cpp
     src/access_control/abac_policy_engine.cpp
@@ -116,6 +127,9 @@ add_executable(${PROJECT_NAME}
     src/attributes/database_attribute_provider.cpp
     src/resources/airspace_resource_manager.cpp
     src/signature/geofence_signature_service.cpp
+    src/signature/geofence_signature_service_path.cpp
+    src/signature/geofence_signature_service_region.cpp
+    src/signature/geofence_signature_service_ta.cpp
     src/signature/dss_ms_signature.cpp
     src/signature/mission_signature_verifier.cpp
     src/flight_control/flight_control_module.cpp
@@ -266,7 +280,7 @@ endif()
 # ------------------------------------------------------------------------------
 # 工具与测试可执行文件
 # ------------------------------------------------------------------------------
-add_executable(test_decrypt_ground tools/test_decrypt_ground.cpp src/signature/geofence_signature_service.cpp src/signature/dss_ms_signature.cpp)
+add_executable(test_decrypt_ground tools/test_decrypt_ground.cpp src/signature/geofence_signature_service.cpp src/signature/geofence_signature_service_path.cpp src/signature/geofence_signature_service_region.cpp src/signature/geofence_signature_service_ta.cpp src/signature/dss_ms_signature.cpp)
 target_link_libraries(test_decrypt_ground pthread yaml-cpp)
 link_miracl_target(test_decrypt_ground)
 
@@ -285,7 +299,7 @@ add_executable(test_mission_signature_verifier tools/test_mission_signature_veri
 target_link_libraries(test_mission_signature_verifier pthread)
 link_miracl_target(test_mission_signature_verifier)
 
-add_executable(test_geofence_sanitizer tools/test_geofence_sanitizer.cpp src/signature/dss_ms_signature.cpp src/signature/geofence_signature_service.cpp)
+add_executable(test_geofence_sanitizer tools/test_geofence_sanitizer.cpp src/signature/dss_ms_signature.cpp src/signature/geofence_signature_service.cpp src/signature/geofence_signature_service_path.cpp src/signature/geofence_signature_service_region.cpp src/signature/geofence_signature_service_ta.cpp)
 target_link_libraries(test_geofence_sanitizer pthread)
 link_miracl_target(test_geofence_sanitizer)
 
@@ -302,8 +316,8 @@ add_executable(test_fcsacm_star_complete_flow tools/test_fcsacm_star_complete_fl
     src/access_control/access_control_engine.cpp src/access_control/abac_policy_engine.cpp src/access_control/expression_evaluator.cpp src/access_control/access_decision_generator.cpp src/access_control/policy_config_loader.cpp
     src/authentication/authentication_provider.cpp src/authentication/authentication_provider_factory.cpp src/authentication/x509_certificate_provider.cpp
     src/attributes/attribute_provider.cpp src/attributes/attribute_aggregator.cpp src/attributes/environment_attribute_provider.cpp src/attributes/database_attribute_provider.cpp
-    src/signature/geofence_signature_service.cpp src/signature/dss_ms_signature.cpp src/signature/mission_signature_verifier.cpp
-    src/resources/airspace_resource_manager.cpp src/communication/mavlink_manager.cpp src/flight_control/flight_control_module.cpp src/flight_control/flight_plan.cpp
+    src/signature/geofence_signature_service.cpp src/signature/geofence_signature_service_path.cpp src/signature/geofence_signature_service_region.cpp src/signature/geofence_signature_service_ta.cpp src/signature/dss_ms_signature.cpp src/signature/mission_signature_verifier.cpp
+    src/resources/airspace_resource_manager.cpp src/communication/mavlink_manager.cpp src/communication/mavlink_manager_control.cpp src/communication/mavlink_manager_tx.cpp src/communication/mavlink_manager_access.cpp src/communication/mavlink_manager_ingest.cpp src/flight_control/flight_control_module.cpp src/flight_control/flight_plan.cpp
     src/state/drone_state_manager.cpp src/error/error_recovery_manager.cpp src/error/security_violation_handler.cpp
     src/database/database_manager.cpp
 )
@@ -315,15 +329,15 @@ if(MAVSDK_FOUND)
 endif()
 link_miracl_target(test_fcsacm_star_complete_flow)
 
-add_executable(generate_px4_geofence_tokens tools/generate_px4_geofence_tokens.cpp src/signature/geofence_signature_service.cpp src/signature/dss_ms_signature.cpp)
+add_executable(generate_px4_geofence_tokens tools/generate_px4_geofence_tokens.cpp src/signature/geofence_signature_service.cpp src/signature/geofence_signature_service_path.cpp src/signature/geofence_signature_service_region.cpp src/signature/geofence_signature_service_ta.cpp src/signature/dss_ms_signature.cpp)
 target_link_libraries(generate_px4_geofence_tokens pthread)
 link_miracl_target(generate_px4_geofence_tokens)
 
-add_executable(generate_enhanced_baseline_token tools/generate_enhanced_baseline_token.cpp src/signature/geofence_signature_service.cpp src/signature/dss_ms_signature.cpp)
+add_executable(generate_enhanced_baseline_token tools/generate_enhanced_baseline_token.cpp src/signature/geofence_signature_service.cpp src/signature/geofence_signature_service_path.cpp src/signature/geofence_signature_service_region.cpp src/signature/geofence_signature_service_ta.cpp src/signature/dss_ms_signature.cpp)
 target_link_libraries(generate_enhanced_baseline_token pthread)
 link_miracl_target(generate_enhanced_baseline_token)
 
-add_executable(analyze_token_sizes tools/analyze_token_sizes.cpp src/signature/geofence_signature_service.cpp src/signature/dss_ms_signature.cpp)
+add_executable(analyze_token_sizes tools/analyze_token_sizes.cpp src/signature/geofence_signature_service.cpp src/signature/geofence_signature_service_path.cpp src/signature/geofence_signature_service_region.cpp src/signature/geofence_signature_service_ta.cpp src/signature/dss_ms_signature.cpp)
 target_link_libraries(analyze_token_sizes pthread)
 link_miracl_target(analyze_token_sizes)
 
@@ -338,6 +352,10 @@ if(DRONE_GRPC_USE_CONFIG OR DRONE_GRPC_USE_PKGCONFIG)
         src/edge/edge_device_main.cpp
         src/edge/edge_device_manager.cpp
         src/communication/mavlink_manager.cpp
+        src/communication/mavlink_manager_control.cpp
+        src/communication/mavlink_manager_tx.cpp
+        src/communication/mavlink_manager_access.cpp
+        src/communication/mavlink_manager_ingest.cpp
         src/state/drone_state_manager.cpp
         src/access_control/access_control_engine.cpp
         src/access_control/abac_policy_engine.cpp
@@ -353,6 +371,9 @@ if(DRONE_GRPC_USE_CONFIG OR DRONE_GRPC_USE_PKGCONFIG)
         src/attributes/database_attribute_provider.cpp
         src/resources/airspace_resource_manager.cpp
         src/signature/geofence_signature_service.cpp
+        src/signature/geofence_signature_service_path.cpp
+        src/signature/geofence_signature_service_region.cpp
+        src/signature/geofence_signature_service_ta.cpp
         src/signature/dss_ms_signature.cpp
         src/signature/mission_signature_verifier.cpp
         src/flight_control/flight_control_module.cpp

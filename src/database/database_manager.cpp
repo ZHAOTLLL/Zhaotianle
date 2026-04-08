@@ -5,6 +5,7 @@
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
+#include <regex>
 #include <libpq-fe.h>
 #include "hiredis.h"
 #include "resources/airspace_resource_manager.hpp"
@@ -450,9 +451,36 @@ public:
             return std::nullopt;
         }
         
-        // 这里应该解析 JSON 并构建 ExtendedDroneState 对象
-        // 简化处理，返回空
-        return std::nullopt;
+        auto extract_number = [&](const std::string& src, const std::string& field) -> std::optional<double> {
+            const std::regex pattern("\"" + field + "\"\\s*:\\s*(-?[0-9]+(?:\\.[0-9]+)?)");
+            std::smatch match;
+            if (!std::regex_search(src, match, pattern) || match.size() < 2) {
+                return std::nullopt;
+            }
+
+            try {
+                return std::stod(match[1].str());
+            } catch (...) {
+                return std::nullopt;
+            }
+        };
+
+        ExtendedDroneState state{};
+        state.drone_id = drone_id;
+
+        auto latitude = extract_number(*value, "latitude");
+        auto longitude = extract_number(*value, "longitude");
+        auto altitude = extract_number(*value, "altitude");
+
+        if (!latitude || !longitude) {
+            std::cerr << "[Redis] getCachedDroneState 解析失败: 缺少经纬度字段, key=" << key << std::endl;
+            return std::nullopt;
+        }
+
+        state.position.latitude = *latitude;
+        state.position.longitude = *longitude;
+        state.position.altitude = altitude.value_or(0.0);
+        return state;
     }
 
     bool setCache(const std::string& key, const std::string& value, int expiration) {

@@ -498,8 +498,6 @@ bool X509CertificateProviderMiracl::verifyCertificateSignature(const octet& cert
 }
 
 int X509CertificateProviderMiracl::findMatchingCA(const octet& cert) {
-    // 简化实现：检查证书的issuer是否匹配CA的subject
-    // 这里使用简单的匹配策略，实际应该比较完整的DN
     // 创建非const副本，因为Miracl函数不接受const参数
     char cert_copy[MAX_CERT_SIZE];
     octet cert_nonconst = {0, cert.len, cert_copy};
@@ -512,13 +510,33 @@ int X509CertificateProviderMiracl::findMatchingCA(const octet& cert) {
     if (issuer_ptr == 0) {
         return -1;
     }
-    
-    // 简化：返回第一个CA（实际应该进行完整的DN匹配）
-    // TODO: 实现完整的DN匹配逻辑
-    if (!trusted_cas_.empty()) {
-        return 0;
+
+    for (size_t i = 0; i < trusted_cas_.size(); ++i) {
+        const auto& ca = trusted_cas_[i];
+        if (ca.cert_data.len <= 0 || ca.cert_data.len > MAX_CERT_SIZE) {
+            continue;
+        }
+
+        char ca_cert_copy[MAX_CERT_SIZE];
+        octet ca_cert_nonconst = {0, ca.cert_data.len, ca_cert_copy};
+        memcpy(ca_cert_copy, ca.cert_data.val, ca.cert_data.len);
+        ca_cert_nonconst.len = ca.cert_data.len;
+
+        int subject_ptr = 0;
+        int subject_len = 0;
+        subject_ptr = X509_find_subject(&ca_cert_nonconst, &subject_len);
+        if (subject_ptr == 0 || subject_len <= 0) {
+            continue;
+        }
+
+        if (issuer_len == subject_len &&
+            issuer_ptr + issuer_len <= cert.len &&
+            subject_ptr + subject_len <= ca.cert_data.len &&
+            memcmp(cert.val + issuer_ptr, ca.cert_data.val + subject_ptr, issuer_len) == 0) {
+            return static_cast<int>(i);
+        }
     }
-    
+
     return -1;
 }
 
